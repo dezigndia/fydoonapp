@@ -35,13 +35,7 @@ project.xcworkspace
 /ReactAndroid/gradlew
 /ReactAndroid/gradlew.bat
 
-# Buck
-.buckd
-buck-out
-/.lsp.buckd
-/.lsp-buck-out
-/ReactAndroid/src/main/jni/prebuilt/lib/
-/ReactAndroid/src/main/gen
+
 
 # Android Studio
 .project
@@ -51,12 +45,6 @@ buck-out
 # Watchman
 .watchmanconfig
 
-# Android
-.idea
-.gradle
-local.properties
-*.iml
-/android/
 
 # Node
 node_modules
