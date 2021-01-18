@@ -98,5 +98,12 @@ package-lock.json
 
 # Android memory profiler files
 *.hprof
-android/.gradle/
-android/app/build/
+
+
+# Android/IntelliJ
+#
+build/
+.idea
+.gradle
+local.properties
+*.iml
