@@ -73,7 +73,7 @@ export default function ContactListItem(props) {
           )}
         </View>
       </TouchableOpacity>
-      {isFriend && (
+      {isFriend && onPressChat != null && (
         <TouchableOpacity style={styles.chatButton} onPress={onPressChat}>
           <Icon
             name="android-messages"

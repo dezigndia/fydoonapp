@@ -21,9 +21,14 @@ import Swiper from 'react-native-swiper';
 import {Icon} from 'react-native-elements';
 import {BaseBackgroundColors} from '../../../../styles/constants';
 import {useDispatch, useSelector} from 'react-redux';
-import {getUserDetails} from '../../../../apis/account-operations';
+import {
+  getFriendsDetails,
+  getUserDetails,
+} from '../../../../apis/account-operations';
 
 import Toast from 'react-native-simple-toast';
+import _ from 'lodash';
+import moment from 'moment';
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
@@ -39,14 +44,14 @@ const FriendProfileScreen = ({navigation, route}) => {
   async function getUserData() {
     const id = route.params.friendId;
     setLoadingStatus('loading');
-    getUserDetails(utils.token)
+    getFriendsDetails(id, utils.token)
       .then(res => {
         setUserData(res.data);
         setLoadingStatus('done');
       })
       .catch(err => {
         setLoadingStatus('error');
-        console.log(err, 'getUserdetails api');
+        console.log(err, 'getfriendDetails api');
         Toast.show('Failed to get friends details!');
       });
   }
@@ -91,20 +96,26 @@ const FriendProfileScreen = ({navigation, route}) => {
                   justifyContent: 'center',
                 }}>
                 <View style={[styles.profileImageStyle]}>
-                  {userData.profile_pic.IMAGE != null &&
-                    userData.profile_pic.IMAGE != '' && (
+                  {userData.profileImage != null &&
+                    !_.isEmpty(userData.profileImage) &&
+                    userData.profileImage != '' && (
                       <Image
                         style={styles.profileImageStyle}
                         source={{
-                          uri: userData.profile_pic.IMAGE,
+                          uri: userData.profileImage,
                         }}
                       />
                     )}
-                  {(userData.profile_pic.IMAGE == null ||
-                    userData.profile_pic.IMAGE == '') && (
+                  {(userData.profileImage == null ||
+                    userData.profileImage == '' ||
+                    _.isEmpty(userData.profileImage)) && (
                     <View style={styles.profileImageStyle}>
                       <Text style={styles.firstLetter}>
-                        {userData.user.first_name[0].toUpperCase()}
+                        {userData != null
+                          ? userData.firstName
+                            ? userData.firstName[0].toUpperCase()
+                            : ''
+                          : ''}
                       </Text>
                     </View>
                   )}
@@ -112,7 +123,8 @@ const FriendProfileScreen = ({navigation, route}) => {
               </View>
               <View style={{alignItems: 'center', justifyContent: 'center'}}>
                 <Text numberOfLines={2} style={{color: 'black', fontSize: 26}}>
-                  {userData.user.first_name + ' ' + userData.user.last_name}
+                  {userData != null &&
+                    userData.firstName + ' ' + userData.lastName}
                 </Text>
               </View>
               <View
@@ -123,8 +135,10 @@ const FriendProfileScreen = ({navigation, route}) => {
                   marginTop: 5,
                 }}>
                 <Text style={styles.normaltextStyle}>
-                  {userData.profile.WORK
-                    ? userData.profile.WORK
+                  {userData != null &&
+                  userData.work != null &&
+                  userData.work != ''
+                    ? userData.work
                     : 'Not working yet'}
                 </Text>
                 <View
@@ -144,8 +158,10 @@ const FriendProfileScreen = ({navigation, route}) => {
                 />
 
                 <Text style={styles.normaltextStyle}>
-                  {userData.profile.WORK_LOCATION
-                    ? userData.profile.WORK_LOCATION
+                  {userData != null &&
+                  userData.workLocation != null &&
+                  userData.workLocation != ''
+                    ? userData.workLocation
                     : 'No location available'}
                 </Text>
               </View>
@@ -220,8 +236,10 @@ const FriendProfileScreen = ({navigation, route}) => {
                     />
 
                     <Text style={styles.bioText}>
-                      {userData != null && userData.profile.ABOUT
-                        ? userData.profile.ABOUT
+                      {userData != null &&
+                      userData.about != null &&
+                      userData.about != ''
+                        ? userData.about
                         : 'Not available'}
                     </Text>
                   </View>
@@ -242,7 +260,11 @@ const FriendProfileScreen = ({navigation, route}) => {
                         alignItems: 'flex-start',
                         justifyContent: 'flex-start',
                       }}
-                      data={userData != null ? userData.profile_skill : []}
+                      data={
+                        userData != null && userData.skills != null
+                          ? userData.skills
+                          : []
+                      }
                       keyExtractor={(item, index) => index.toString()}
                       ListEmptyComponent={() => (
                         <View style={{marginTop: 10}}>
@@ -288,32 +310,30 @@ const FriendProfileScreen = ({navigation, route}) => {
                       }}
                     />
                   </View>
-                  {userData != null &&
-                    userData &&
-                    userData.profile.DATE_OF_BIRTH !== '' && (
-                      <View style={styles.slide1}>
-                        <Text style={styles.normalTextWithGray}>
-                          Date of Birth
-                        </Text>
-                        <View
-                          style={{
-                            width: 50,
-                            height: 1,
-                            backgroundColor: 'grey',
-                            marginTop: 3,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                          }}
-                        />
+                  {userData != null && userData.dob != null && (
+                    <View style={styles.slide1}>
+                      <Text style={styles.normalTextWithGray}>
+                        Date of Birth
+                      </Text>
+                      <View
+                        style={{
+                          width: 50,
+                          height: 1,
+                          backgroundColor: 'grey',
+                          marginTop: 3,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}
+                      />
 
-                        <Text style={styles.bioText}>
-                          {userData.profile.DATE_OF_BIRTH}
-                        </Text>
-                      </View>
-                    )}
+                      <Text style={styles.bioText}>
+                        {moment(userData.dob).format('DD-MMM-YY')}
+                      </Text>
+                    </View>
+                  )}
                   {userData != null &&
-                    userData &&
-                    userData.profile_experience.length > 0 && (
+                    userData.experiences != null &&
+                    userData.experiences.length > 0 && (
                       <View style={styles.slide1}>
                         <Text style={styles.normalTextWithGray}>
                           Expirences
@@ -330,7 +350,7 @@ const FriendProfileScreen = ({navigation, route}) => {
                         />
 
                         <FlatList
-                          data={userData.profile_experience}
+                          data={userData.experiences}
                           showsVerticalScrollIndicator={false}
                           contentContainerStyle={{
                             flex: 1,
@@ -355,7 +375,9 @@ const FriendProfileScreen = ({navigation, route}) => {
                                           BaseBackgroundColors.profileColor,
                                         fontSize: 16,
                                       }}>
-                                      {item.START_YEAR}
+                                      {moment(item.startDate).format(
+                                        'DD-MMM-YY',
+                                      )}
                                     </Text>
                                     <Text
                                       style={{
@@ -375,7 +397,7 @@ const FriendProfileScreen = ({navigation, route}) => {
                                           BaseBackgroundColors.profileColor,
                                         fontSize: 16,
                                       }}>
-                                      {item.END_YEAR}
+                                      {moment(item.endDate).format('DD-MMM-YY')}
                                     </Text>
                                   </View>
                                 </View>
@@ -387,7 +409,7 @@ const FriendProfileScreen = ({navigation, route}) => {
                                     fontSize: 16,
                                     alignSelf: 'flex-start',
                                   }}>
-                                  {item.DESCRIPTION}
+                                  {item.description}
                                 </Text>
                               </View>
                             );
@@ -395,7 +417,7 @@ const FriendProfileScreen = ({navigation, route}) => {
                         />
                       </View>
                     )}
-                  {userData != null && userData.profile_education.length > 0 && (
+                  {userData != null && userData.educations.length > 0 && (
                     <View style={styles.slide1}>
                       <Text style={styles.normalTextWithGray}>Education</Text>
                       <View
@@ -410,7 +432,7 @@ const FriendProfileScreen = ({navigation, route}) => {
                       />
 
                       <FlatList
-                        data={userData.profile_education}
+                        data={userData.educations}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{
                           flex: 1,
@@ -434,7 +456,7 @@ const FriendProfileScreen = ({navigation, route}) => {
                                       color: BaseBackgroundColors.profileColor,
                                       fontSize: 16,
                                     }}>
-                                    {item.START_YEAR}
+                                    {moment(item.startDate).format('DD-MMM-YY')}
                                   </Text>
                                   <Text
                                     style={{
@@ -452,7 +474,7 @@ const FriendProfileScreen = ({navigation, route}) => {
                                       color: BaseBackgroundColors.profileColor,
                                       fontSize: 16,
                                     }}>
-                                    {item.END_YEAR}
+                                    {moment(item.endDate).format('DD-MMM-YY')}
                                   </Text>
                                 </View>
                               </View>
@@ -464,7 +486,7 @@ const FriendProfileScreen = ({navigation, route}) => {
                                   fontSize: 16,
                                   alignSelf: 'flex-start',
                                 }}>
-                                {item.DESCRIPTION}
+                                {item.description}
                               </Text>
                             </View>
                           );
@@ -529,7 +551,7 @@ const FriendProfileScreen = ({navigation, route}) => {
           </View> */}
             {/* Photos View */}
 
-            <View
+            {/* <View
               style={[
                 styles.commonViewStyle,
                 {
@@ -612,11 +634,11 @@ const FriendProfileScreen = ({navigation, route}) => {
                   }
                 }}
               />
-            </View>
+            </View> */}
 
             {/* Photos View More */}
 
-            {userData && userData.profile_images.length > 6 && (
+            {/* {userData && userData.profile_images.length > 6 && (
               <TouchableOpacity
                 style={{
                   alignItems: 'center',
@@ -636,7 +658,7 @@ const FriendProfileScreen = ({navigation, route}) => {
                   View More
                 </Text>
               </TouchableOpacity>
-            )}
+            )} */}
 
             {/* Followers Suggestions Btn View */}
 

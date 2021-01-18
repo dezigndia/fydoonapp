@@ -100,12 +100,12 @@ function TabBar(props) {
           name="status"
           component={StatusScreen}
           options={{title: 'Status'}}
-        /> */}
+        />
         <Tab.Screen
           name="broadcasts"
           component={BroadcastScreen}
           options={{title: 'Broadcast'}}
-        />
+        />*/}
         <Tab.Screen
           name="profile"
           component={BioScreen}

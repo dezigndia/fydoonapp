@@ -17,4 +17,8 @@ export const ChatEvent = {
   ROOM_MEMBERS: 'roomMembers',
   JOIN_GROUP: 'joinGroup',
   EXIT_GROUP: 'exitGroup',
+  DELETE_MESSAGE_FOR_ME: 'deleteMessageForMe',
+  DELETE_MESSAGE_FOR_EVERYONE: 'deleteMessageForEveryone',
+  READ_MESSAGE: 'readMessages',
+  CLEAR_CHAT_HISTORY: 'clearChatHistory',
 };

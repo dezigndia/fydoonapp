@@ -24,7 +24,10 @@ import {Overlay} from 'react-native-elements';
 import InboxModal from '../../long-press-modals/inbox-modal';
 import {openContact} from '../../../utils/contacts-update';
 import _ from 'lodash';
-import {joinRoom} from '../../../redux/actions/socket-actions';
+import {
+  getSubscriptions,
+  joinRoom,
+} from '../../../redux/actions/socket-actions';
 
 export default function Inbox({navigation, route}) {
   const utils = useSelector(state => state.utils);
@@ -58,13 +61,14 @@ export default function Inbox({navigation, route}) {
   // console.log(subscriptions);
   const getMessenger = () => {
     let messenger = [];
+
     subscriptions.forEach(item => {
       if (item.t === 'd') {
         messenger.push({
           id: item.roomId,
           roomId: item.roomId,
           participant_one: '',
-          participant_two: '',
+          participant_two: item.user._id,
           roomDisplayName:
             item.user.firstName + ' ' + item.user.lastName ||
             item.user.phone.code + ' ' + item.user.phone.number ||
@@ -165,7 +169,7 @@ export default function Inbox({navigation, route}) {
             tintColor={BaseBackgroundColors.secondary}
             refreshing={refreshing}
             onRefresh={() => {
-              getInboxList();
+              getSubscriptions(dispatch);
             }}
           />
         }

@@ -27,6 +27,7 @@ import {editContact, openContact} from '../../utils/contacts-update';
 import {reportUser} from '../../apis/chat-operations';
 import Toast from 'react-native-simple-toast';
 import {Platform} from 'react-native';
+import {clearChatHistory} from '../../redux/actions/socket-actions';
 
 const MessengerHeader = ({navigation}) => {
   const messengerData = useSelector(state => state.messenger);
@@ -42,10 +43,9 @@ const MessengerHeader = ({navigation}) => {
     });
   }
   function handleClearChat() {
-    if (ws && ws.readyState === ws.OPEN) {
-      ws.send(clearChat(friend.participant_two, friend.type));
-      ws.send(fetchMessages(friend.participant_two, friend.type, 0, 1000));
-    }
+    clearChatHistory(friend.roomId, () => {
+      Toast.show('Chat cleared', Toast.SHORT);
+    });
   }
   function handleEditContact() {
     // console.log(friend.roomDisplayName);
@@ -179,7 +179,7 @@ const MessengerHeader = ({navigation}) => {
                 <Text style={styles.menuitemText}>View Profile</Text>
               </MenuOption>
             )}
-            {friend.type === 'g' && (
+            {/* {friend.type === 'g' && (
               <MenuOption
                 onSelect={() =>
                   navigation.navigate('group-details', {
@@ -189,7 +189,7 @@ const MessengerHeader = ({navigation}) => {
                 style={styles.menuitem}>
                 <Text style={styles.menuitemText}>Group info</Text>
               </MenuOption>
-            )}
+            )} */}
             {friend.type === 'b' && (
               <MenuOption
                 onSelect={() =>
@@ -206,11 +206,11 @@ const MessengerHeader = ({navigation}) => {
               style={styles.menuitem}>
               <Text style={styles.menuitemText}>Search</Text>
             </MenuOption> */}
-            {friend.type === 'o' && (
+            {/* {friend.type === 'o' && (
               <MenuOption onSelect={() => onReport()} style={styles.menuitem}>
                 <Text style={styles.menuitemText}>Report</Text>
               </MenuOption>
-            )}
+            )} */}
             {/* <MenuOption
               onSelect={() => Alert.alert(`SwitchIn`, 'Comming Soon')}
               style={styles.menuitem}>

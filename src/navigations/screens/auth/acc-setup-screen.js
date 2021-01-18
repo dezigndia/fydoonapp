@@ -27,6 +27,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import {formatDate} from '../../../utils/utils';
 import {useSelector, useDispatch} from 'react-redux';
 import {checkIsAccountSetuped} from '../../../redux/actions/utils-actions';
+import {acc} from 'react-native-reanimated';
 
 const AccountSetupScreen = props => {
   //console.disableYellowBox = true;
@@ -56,9 +57,15 @@ const AccountSetupScreen = props => {
     if (firstName.trim() === '') {
       setErrorType('firstname');
       setError("First name can't be empty!");
+      return;
     } else if (lastName.trim() === '') {
       setErrorType('lastname');
       setError("Last name can't be empty!");
+      return;
+    } else if (dob.trim() === '') {
+      setErrorType('lastname');
+      setError("Last name can't be empty!");
+      return;
     } else {
       // setShowSkills(!showSkill); change this to enable skill container
       handlesubmit();
@@ -83,31 +90,36 @@ const AccountSetupScreen = props => {
     };
     const token = await AsyncStorage.getItem('token');
     uploadProfile(data, token)
-      .then(async res => {
-        dispatch(checkIsAccountSetuped(true));
-        setLoading(false);
-        console.log(res);
+      .then(async user_res => {
+        if (img) {
+          const propicData = {
+            profileImage: 'data:image/jpeg;base64,' + img.data,
+          };
 
-        props.navigation.replace('home');
+          sendUserProfilePic(propicData, token)
+            .then(res => {
+              dispatch(checkIsAccountSetuped(true));
+              setLoading(false);
+              console.log(res, 'image uploaded');
+              props.navigation.replace('home');
+            })
+            .catch(err => {
+              console.log(err, 'image error');
+            });
+        } else {
+          dispatch(checkIsAccountSetuped(true));
+          setLoading(false);
+          // console.log(user_res);
+
+          props.navigation.replace('home');
+        }
       })
       .catch(err => {
         setLoading(false);
         setError('Request Failed!');
         console.log(err);
       });
-    if (img) {
-      const propicData = {
-        profileImage: 'data:image/jpeg;base64,' + img.data,
-      };
 
-      sendUserProfilePic(propicData, token)
-        .then(res => {
-          console.log(res, 'image uploaded');
-        })
-        .catch(err => {
-          console.log(err, 'image error');
-        });
-    }
     if (skills.length > 0) {
       const addedskills = skills.filter(item => item.isAdded);
       if (addedskills.length > 0) {

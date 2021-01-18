@@ -126,7 +126,7 @@ const EditProfile = ({navigation}) => {
     setWork(data.work);
     setWorkLocation(data.workLocation);
     setAbout(data.about);
-    setDate(data.about);
+    setDate(data.dob);
     setExpirences(data.expirences);
     setEducations(data.educations);
     setDob(moment(data.dob).format('DD-MMM-YY'));
@@ -173,7 +173,8 @@ const EditProfile = ({navigation}) => {
       uploadProfile(data, utils.token)
         .then(async res => {
           setLoading(false);
-          console.log(res);
+          Toast.show('Profile updated', Toast.SHORT);
+          // console.log(res);
           getUserData();
         })
         .catch(err => {

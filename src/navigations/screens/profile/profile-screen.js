@@ -313,7 +313,10 @@ const BioScreen = ({navigation}) => {
             <View style={{alignItems: 'center', justifyContent: 'center'}}>
               <Text numberOfLines={2} style={{color: 'black', fontSize: 26}}>
                 {userData != null &&
-                  userData.firstName + ' ' + userData.lastName}
+                userData.firstName != null &&
+                userData.firstName != ''
+                  ? userData.firstName + ' ' + userData.lastName
+                  : 'Edit profile to enter name'}
               </Text>
             </View>
             <View
@@ -324,7 +327,11 @@ const BioScreen = ({navigation}) => {
                 marginTop: 5,
               }}>
               <Text style={styles.normaltextStyle}>
-                {userData != null ? userData.work : 'Not working yet'}
+                {userData != null &&
+                userData.work != null &&
+                userData.work != ''
+                  ? userData.work
+                  : 'Not working yet'}
               </Text>
               <View
                 style={{
@@ -343,7 +350,9 @@ const BioScreen = ({navigation}) => {
               />
 
               <Text style={styles.normaltextStyle}>
-                {userData != null
+                {userData != null &&
+                userData.workLocation != null &&
+                userData.workLocation != ''
                   ? userData.workLocation
                   : 'No location available'}
               </Text>
@@ -419,7 +428,9 @@ const BioScreen = ({navigation}) => {
                   />
 
                   <Text style={styles.bioText}>
-                    {userData != null && userData.about
+                    {userData != null &&
+                    userData.about != null &&
+                    userData.about != ''
                       ? userData.about
                       : 'Edit profile to add about yourself'}
                   </Text>
@@ -506,7 +517,7 @@ const BioScreen = ({navigation}) => {
                   </View>
                 )}
                 {userData != null &&
-                  userData.experiences &&
+                  userData.experiences != null &&
                   userData.experiences.length > 0 && (
                     <View style={styles.slide1}>
                       <Text style={styles.normalTextWithGray}>Expirences</Text>
@@ -623,7 +634,7 @@ const BioScreen = ({navigation}) => {
                                     color: BaseBackgroundColors.profileColor,
                                     fontSize: 16,
                                   }}>
-                                  {item.startDate}
+                                  {moment(item.startDate).format('DD-MMM-YY')}
                                 </Text>
                                 <Text
                                   style={{
@@ -641,7 +652,7 @@ const BioScreen = ({navigation}) => {
                                     color: BaseBackgroundColors.profileColor,
                                     fontSize: 16,
                                   }}>
-                                  {item.endDate}
+                                  {moment(item.endDate).format('DD-MMM-YY')}
                                 </Text>
                               </View>
                             </View>

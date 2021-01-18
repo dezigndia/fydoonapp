@@ -9,34 +9,19 @@ function filterContacts(list, dispatch, token, callback) {
     list.map((item, index) => {
       if (item.phoneNumbers.length > 0) {
         item.phoneNumbers.map((each, i) => {
-          // let contact = {
-          //   name: item.displayName,
-          //   'phone-number': each.number,
-          // };
+          let contact = {
+            firstName: item.displayName,
+            phone: each.number,
+            lastName: '',
+          };
 
-          contacts.push(each.number);
+          contacts.push(contact);
         });
       }
     });
     if (callback) {
       callback(contacts);
     }
-    //console.log(JSON.stringify(contacts));
-    // const data = new FormData();
-    // data.append('fetch_contact', JSON.stringify(contacts));
-    // sendContactList(token, data)
-    //   .then(response => {
-    //     // console.log(response.data);
-    //     dispatch(
-    //       setContacts({
-    //         friends: response.data['friends'],
-    //         notFriends: response.data['not-friends'],
-    //       }),
-    //     );
-    //   })
-    //   .catch(err => {
-    //     console.log(err.response, 'upload contacts api error');
-    //   });
   }
   return [];
 }

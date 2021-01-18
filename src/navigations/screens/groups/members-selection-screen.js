@@ -223,6 +223,9 @@ export default MembersSelectionScreen;
 function getName(userDetails) {
   return (
     userDetails.firstName + ' ' + userDetails.lastName ||
+    userDetails.localContact.firstName +
+      ' ' +
+      userDetails.localContact.lastName ||
     userDetails.phone.code + ' ' + userDetails.phone.number ||
     ''
   );

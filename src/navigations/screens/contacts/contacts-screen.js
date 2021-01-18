@@ -28,6 +28,7 @@ import {
   createDirectRoom,
   getSubscriptions,
   joinRoom,
+  sendContacts,
 } from '../../../redux/actions/socket-actions';
 import _ from 'lodash';
 
@@ -74,11 +75,13 @@ const ContactScreen = props => {
     dispatch(setChatFriend(obj));
     if (item.roomId) {
       joinRoom(item.roomId);
+      props.navigation.navigate('messenger');
     } else {
-      createDirectRoom(item._id);
+      createDirectRoom(item._id, () => {
+        props.navigation.navigate('messenger');
+        sendContacts(utils.token, dispatch);
+      });
     }
-
-    props.navigation.navigate('messenger');
   }
   function handleSearch(text) {
     setSearch(text);
@@ -105,7 +108,7 @@ const ContactScreen = props => {
     setFilteredFriends(filtering);
     // setFilteredInvites(filterInvites);
   }
-
+  //console.log(filteredFriends);
   return (
     <>
       <StatusBar
@@ -131,22 +134,20 @@ const ContactScreen = props => {
             tintColor={BaseBackgroundColors.secondary}
             refreshing={refreshing}
             onRefresh={() => {
-              getContacts(dispatch, utils.token, contacts => {
-                getSubscriptions(contacts, dispatch);
-              });
+              sendContacts(utils.token, dispatch);
             }}
           />
         }
         style={styles.mainContainer}
         showsVerticalScrollIndicator={false}>
-        <ContactListItem
+        {/* <ContactListItem
           iconColor={BaseBackgroundColors.profileColor}
           iconName={'account-multiple'}
           iconType={'material-community'}
           txtLeftTitle="New Group"
           avatarStyle={styles.avatarStyle}
           onPress={() => handleNewGroup()}
-        />
+        /> */}
         {/* <ContactListItem
           iconColor={BaseBackgroundColors.profileColor}
           onPress={() =>
@@ -181,25 +182,11 @@ const ContactScreen = props => {
           renderItem={({item, index}) => (
             <ContactListItem
               isFriend={true}
-              // onPress={() =>
-              //   props.navigation.navigate('friend-profile', {
-              //     friendId: item._id,
-              //   })
-              // }
-              onPressChat={() => {
-                Alert.alert('Fyndoo', `You will chat with ${getName(item)}`, [
-                  {
-                    text: 'Cancel',
-                    onPress: () => null,
-                    style: 'cancel',
-                  },
-                  {
-                    text: 'OK',
-                    onPress: () => {
-                      handleNewChat(item);
-                    },
-                  },
-                ]);
+              onPress={() => {
+                handleNewChat(item);
+                // props.navigation.navigate('friend-profile', {
+                //   friendId: item._id,
+                // });
               }}
               iconName={'account'}
               iconType={'material-community'}
@@ -214,7 +201,7 @@ const ContactScreen = props => {
             />
           )}
         />
-        {false && contacts.notFriends.length > 0 && (
+        {contacts.notFriends.length > 0 && (
           <>
             <View style={styles.friendListTitleContanier}>
               <Text style={styles.friendListTitle}>Invite others</Text>
@@ -232,14 +219,12 @@ const ContactScreen = props => {
                     Alert.alert(
                       'Fyndoo',
                       `Send an invitation to ${
-                        item.name !== '' ? item.name : item['phone-number']
+                        item.firstName ? item.firstName : item.phone
                       }`,
                     )
                   }
-                  txtLeftTitle={
-                    item.name !== '' ? item.name : item['phone-number']
-                  }
-                  txtContent={item.name !== '' ? item['phone-number'] : ''}
+                  txtLeftTitle={item.firstName ? item.firstName : item.phone}
+                  txtContent={item.phone ? item.phone : ''}
                   avatarStyle={styles.avatarStyle}
                 />
               )}
@@ -255,6 +240,9 @@ export default ContactScreen;
 function getName(userDetails) {
   return (
     userDetails.firstName + ' ' + userDetails.lastName ||
+    userDetails.localContact.firstName +
+      ' ' +
+      userDetails.localContact.lastName ||
     userDetails.phone.code + ' ' + userDetails.phone.number ||
     ''
   );

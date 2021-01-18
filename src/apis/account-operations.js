@@ -268,3 +268,23 @@ export const deleteEducation = (pk, token) =>
         reject(error);
       });
   });
+
+export const getFriendsDetails = (friendId, token) =>
+  new Promise((resolve, reject) => {
+    axios({
+      method: 'get',
+      url: `${mainApi.baseUrl}/users/info/${friendId}`,
+      headers: {
+        Authorization: 'Bearer ' + token,
+      },
+      responseType: 'json',
+    })
+      .then(res => {
+        if (res.status === 200) {
+          resolve(res.data);
+        } else reject(res);
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });

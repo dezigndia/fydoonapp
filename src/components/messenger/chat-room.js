@@ -3,6 +3,7 @@ import {
   View,
   Text,
   TextInput,
+  Clipboard,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
@@ -46,11 +47,16 @@ import {
   getChatsLists,
   getRecentMessage,
   sendSocketMessage,
+  readMessages,
+  deleteMessageForEveryone,
+  deleteMessageForMe,
+  sendFile,
 } from '../../redux/actions/socket-actions';
 import {setChatRoomMessages} from '../../redux/actions/messenger-actions';
 
 const Blob = RNFetchBlob.polyfill.Blob;
 const fs = RNFetchBlob.fs;
+var currRecordingFileTime;
 // window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest;
 // window.Blob = Blob;
 
@@ -93,7 +99,9 @@ export default (ChatRoom = () => {
 
   let start = 0;
   let end = 1000;
+
   useEffect(() => {
+    formatMessages();
     getChatsLists(dispatch);
     getRecentMessage(newMsg => {
       const msgObj = [
@@ -101,6 +109,8 @@ export default (ChatRoom = () => {
           _id: newMsg._id,
           createdAt: moment(newMsg.createdAt),
           isDeleted: newMsg.isDeleted,
+          deletedBy: newMsg.deletedBy,
+          unread: false,
           user: {
             _id: newMsg.user._id,
             name: newMsg.user.firstName + newMsg.user.lastName,
@@ -108,6 +118,7 @@ export default (ChatRoom = () => {
           text: newMsg.msg,
         },
       ];
+      readMessages(id, [newMsg._id]);
 
       setMessages(previousArr => GiftedChat.append(previousArr, msgObj));
     });
@@ -140,13 +151,14 @@ export default (ChatRoom = () => {
           return;
         }
       };
-      AudioRecorder.onFinished = data => {
-        setRecordedFile(data);
+      // AudioRecorder.onFinished = data => {
+      //   setRecordedFile(data);
 
-        updateRecordingTime('');
-        setRecordingStatus('');
-      };
+      //   updateRecordingTime('');
+      //   setRecordingStatus('');
+      // };
     });
+
     return () => {
       if (time !== '') {
         handleStopRecording();
@@ -166,18 +178,28 @@ export default (ChatRoom = () => {
     }
   }, [recordedfile]);
 
+  useEffect(() => {
+    handleReadMeassages();
+  }, [messages]);
+
   const formatMessages = () => {
-    var messageData = chatRoomMessages.map(message => {
-      return {
-        _id: message._id,
-        createdAt: moment(message.createdAt),
-        isDeleted: message.isDeleted,
-        user: {
-          _id: message.user._id,
-          name: message.user.firstName + message.user.lastName,
-        },
-        text: message.msg,
-      };
+    //console.log(chatRoomMessages[0]);
+    var messageData = [];
+    chatRoomMessages.forEach(message => {
+      if (!message.deletedBy.includes(loggedInUser)) {
+        messageData.push({
+          _id: message._id,
+          createdAt: moment(message.createdAt),
+          isDeleted: message.isDeleted,
+          unread: message.unread,
+          user: {
+            _id: message.user._id,
+            name: message.user.firstName + message.user.lastName,
+          },
+          text: message.msg,
+          isDeleted: message.isDeleted,
+        });
+      }
     });
 
     let updateMsg = _.sortBy(
@@ -188,6 +210,16 @@ export default (ChatRoom = () => {
     setMessages(updateMsg);
     setMessagesStatus('recieved');
   };
+  function handleReadMeassages() {
+    let messageIds = [];
+    messages.forEach(message => {
+      if (message.unread == true) {
+        messageIds.push(message._id);
+      }
+    });
+
+    readMessages(id, messageIds);
+  }
 
   const sendMessage = newMsg => {
     sendSocketMessage(id, newMsg);
@@ -200,6 +232,8 @@ export default (ChatRoom = () => {
     }
   };
   const pickImageHandler = () => {
+    Toast.show('Comming Soon', Toast.SHORT);
+    return;
     ImagePicker.showImagePicker(
       {title: 'Pick an Image', maxWidth: 800, maxHeight: 600},
       res => {
@@ -208,61 +242,67 @@ export default (ChatRoom = () => {
         } else if (res.error) {
           console.log('Error', res.error);
         } else {
-          if (ws && ws.readyState === ws.OPEN) {
-            const file = 'data:' + res.type + ';base64,' + res.data;
-
-            ws.send(newMessage(anotherUser, roomType, '', file));
-          }
+          let uploadData = new FormData();
+          uploadData.append('submit', 'ok');
+          uploadData.append('file', {
+            type: res.type,
+            uri: res.uri,
+            name: res.fileName,
+          });
+          sendFile(uploadData, id, '', newMsg => {});
         }
       },
     );
   };
   const openFilePicker = async () => {
+    Toast.show('Comming Soon', Toast.SHORT);
+    return;
     try {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
-      const file_type = mime.contentType(res.fileName);
-      const base64 = await RNFS.readFile(res.uri, 'base64');
+      // const file_type = mime.contentType(res.fileName);
+      // const base64 = await RNFS.readFile(res.uri, 'base64');
 
-      if (ws && ws.readyState === ws.OPEN) {
-        if (base64 != null) {
-          const file = 'data:' + res.type + ';base64,' + base64;
-
-          ws.send(newMessage(anotherUser, roomType, '', file));
-          setIsUploading(false);
-        }
-      } else {
-        setIsUploading(false);
-        Toast.show('Unable to upload!', Toast.SHORT);
-      }
+      let uploadData = new FormData();
+      uploadData.append('submit', 'ok');
+      uploadData.append('file', {type: res.type, uri: res.uri, name: res.name});
+      sendFile(uploadData, id, '', newMsg => {});
     } finally {
       null;
     }
   };
 
   const handleAudio = async () => {
-    //  Toast.show('comming soon!', Toast.SHORT);
+    Toast.show('Comming Soon', Toast.SHORT);
+    return;
     if (recordingStatus === '') {
       setRecordingStatus('start');
+      currRecordingFileTime = Date.now();
       await AudioRecorder.prepareRecordingAtPath(
-        `${AudioUtils.DocumentDirectoryPath}/${Date.now()}test.aac`,
+        `${AudioUtils.DocumentDirectoryPath}/${currRecordingFileTime}test.aac`,
         recordingSettings,
       );
       await AudioRecorder.startRecording();
     } else {
       setRecordingStatus('done');
       await AudioRecorder.stopRecording();
-      const audioPath = `${AudioUtils.DocumentDirectoryPath}/${Date.now()}test`;
+      const audioPath = `${
+        AudioUtils.DocumentDirectoryPath
+      }/${currRecordingFileTime}test`;
 
       const fileName = `${audioPath}.aac`;
 
       const file = {
         uri: Platform.OS === 'ios' ? audioPath : `file://${audioPath}`,
-        name: fileName,
+        name: `${currRecordingFileTime}test.acc`,
         type: `audio/aac`,
       };
-      // console.log(file);
+      let uploadData = new FormData();
+      uploadData.append('submit', 'ok');
+      uploadData.append('file', file);
+      sendFile(uploadData, id, '', newMsg => {});
+      console.log(file);
     }
   };
   const handleCancelRecording = async () => {
@@ -325,11 +365,109 @@ export default (ChatRoom = () => {
         console.log(error);
       });
   }
+  function onDeleteMessageForMe(messageToDelete) {
+    deleteMessageForMe(id, messageToDelete._id, () => {
+      setMessages(previousState =>
+        previousState.filter(message => message._id !== messageToDelete._id),
+      );
+      Toast.show('Message deleted', Toast.SHORT);
+    });
+  }
+
+  function onDeleteMessageEveryone(messageToDelete) {
+    deleteMessageForEveryone(id, messageToDelete._id, () => {
+      setMessages(previousState =>
+        previousState.map(message =>
+          message._id === messageToDelete._id
+            ? {...message, text: 'message deleted', isDeleted: true}
+            : message,
+        ),
+      );
+      Toast.show('Message deleted', Toast.SHORT);
+    });
+  }
+  const handleBubbleLongPress = (context, messageToDelete) => {
+    if (
+      messageToDelete.user._id === loggedInUser &&
+      !messageToDelete.isDeleted
+    ) {
+      //delete for every one
+      let options = [
+        'copy',
+        'Delete message for me',
+        'Delete message for everyone',
+        'Cancel',
+      ];
+
+      const cancelButtonIndex = options.length - 1;
+      context.actionSheet().showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        buttonIndex => {
+          switch (buttonIndex) {
+            case 0:
+              Clipboard.setString(messageToDelete.text);
+              Toast.show('Text copied', Toast.SHORT);
+              break;
+            case 1:
+              onDeleteMessageForMe(messageToDelete);
+              break;
+            case 2:
+              onDeleteMessageEveryone(messageToDelete);
+          }
+        },
+      );
+    } else if (
+      messageToDelete.user._id !== loggedInUser &&
+      !messageToDelete.isDeleted
+    ) {
+      let options = ['copy', 'Delete message for me', 'Cancel'];
+
+      const cancelButtonIndex = options.length - 1;
+      context.actionSheet().showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        buttonIndex => {
+          switch (buttonIndex) {
+            case 0:
+              Clipboard.setString(messageToDelete.text);
+              Toast.show('Text copied', Toast.SHORT);
+              break;
+            case 1:
+              onDeleteMessageForMe(messageToDelete);
+              break;
+          }
+        },
+      );
+    } else {
+      let options = ['Delete', 'Cancel'];
+
+      const cancelButtonIndex = options.length - 1;
+      context.actionSheet().showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        buttonIndex => {
+          switch (buttonIndex) {
+            case 0:
+              onDeleteMessageForMe(messageToDelete);
+              break;
+          }
+        },
+      );
+    }
+  };
   return (
     <>
       <GiftedChat
         text={typingMessage}
         alwaysShowSend
+        onLongPress={handleBubbleLongPress}
         renderUsernameOnMessage={roomType === 'g' ? true : false}
         messages={messages}
         onSend={newMessage => {

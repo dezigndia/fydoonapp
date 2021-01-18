@@ -25,6 +25,7 @@ import {
   sendUserSkills,
   deleteExpirence,
   deleteEducation,
+  getFriendsDetails,
 } from '../../../apis/account-operations';
 import {formatDate} from '../../../utils/utils';
 import {setUserDetails} from '../../../redux/actions/user-details-actions';
@@ -119,7 +120,7 @@ const SeeProfile = ({navigation, route}) => {
     setLastName(data.lastName);
     setGender(data.gender);
     setWork(data.work);
-    setWorkLocation(data.work);
+    setWorkLocation(data.workLocation);
     setAbout(data.about);
     setDate(data.dob);
     setExpirences(data.expirences);
@@ -136,59 +137,12 @@ const SeeProfile = ({navigation, route}) => {
     setSkills(myskills);
   }
 
-  function submitDetails() {
-    setErrorType('');
-    setError('');
-    const fname = firstname.trim();
-    const lname = lastname.trim();
-    if (!fname) {
-      setError("First name can't be empty");
-      setErrorType('firstname');
-    } else if (!lastname) {
-      setError("Last name can't be empty");
-      setErrorType('lastname');
-    } else {
-      setLoading(true);
-      const data = new FormData();
-      data.append('first_name', fname);
-      data.append('last_name', lname);
-      data.append('GENDER', gender);
-      data.append('DATE_OF_BIRTH', dob);
-      data.append('WORK', work);
-      data.append('WORK_LOCATION', workLocation);
-      data.append('ABOUT', about);
-
-      uploadProfile(data, utils.token)
-        .then(async res => {
-          setLoading(false);
-          getUserData();
-          console.log(res);
-        })
-        .catch(err => {
-          setLoading(false);
-          setError('Request Failed!');
-          console.log(err);
-        });
-
-      if (skills.length > 0) {
-        const addedskills = skills.filter(item => item.isAdded);
-        if (addedskills.length > 0) {
-          const fskills = addedskills.map(item => item.name);
-          let skillsData = new FormData();
-
-          skillsData.append('skills', JSON.stringify(fskills));
-
-          sendUserSkills(skillsData, utils.token)
-            .then(res => console.log(res, 'skills posted'))
-            .catch(err => console.log(err, 'skills error'));
-        }
-      }
-    }
-  }
   async function getUserData() {
     setLoadingStatus('loading');
-    getUserDetails(utils.token)
+    const id = route.params.friendId;
+    getFriendsDetails(id, utils.token)
       .then(res => {
+        // console.log(res);
         //  dispatch(setUserDetails(res.data));
         resetValue(res.data);
         setLoadingStatus('done');
