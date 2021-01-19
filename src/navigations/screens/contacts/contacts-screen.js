@@ -32,13 +32,13 @@ import {
 } from '../../../redux/actions/socket-actions';
 import _ from 'lodash';
 
-const ContactScreen = props => {
-  const contacts = useSelector(state => state.contacts.contacts);
+const ContactScreen = (props) => {
+  const contacts = useSelector((state) => state.contacts.contacts);
   const dispatch = useDispatch();
-  const {subscriptions} = useSelector(state => state.socket);
-  const utils = useSelector(state => state.utils);
-  const detectChanges = useSelector(state => state.detectChanges);
-  const userDetails = useSelector(state => state.userDetails);
+  const {subscriptions} = useSelector((state) => state.socket);
+  const utils = useSelector((state) => state.utils);
+  const detectChanges = useSelector((state) => state.detectChanges);
+  const userDetails = useSelector((state) => state.userDetails);
   const ws = utils.ws;
   const [refreshing] = useState(false);
   const [filteredFriends, setFilteredFriends] = useState(contacts.friends);
@@ -92,13 +92,9 @@ const ContactScreen = props => {
       return;
     }
     const filtering = contacts.friends.filter(
-      item =>
-        getName(item)
-          .toLowerCase()
-          .startsWith(value) ||
-        getPhone(item)
-          .toLowerCase()
-          .includes(value),
+      (item) =>
+        getName(item).toLowerCase().startsWith(value) ||
+        getPhone(item).toLowerCase().includes(value),
     );
     // const filterInvites = contacts.notFriends.filter(
     //   item =>
@@ -119,7 +115,7 @@ const ContactScreen = props => {
         {...props}
         title={'Contacts'}
         searchValue={search}
-        onSearch={text => handleSearch(text)}
+        onSearch={(text) => handleSearch(text)}
         onCancel={() => {
           setFilteredFriends(contacts.friends);
           setFilteredInvites(contacts.notFriends);
@@ -217,7 +213,7 @@ const ContactScreen = props => {
                   iconType={'material-community'}
                   onPress={() =>
                     Alert.alert(
-                      'Fyndoo',
+                      'Fydoon',
                       `Send an invitation to ${
                         item.firstName ? item.firstName : item.phone
                       }`,
