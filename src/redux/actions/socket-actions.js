@@ -261,7 +261,10 @@ export const sendFile = (file, roomId, msg = '', callBack) => {
         msg,
       },
     });
-
+    console.log('uploadIds');
+    console.log(uploadIds);
+    console.log('file');
+    console.log(file);
     uploader.on('start', function(fileInfo) {
       console.log('Start uploading', fileInfo);
     });
