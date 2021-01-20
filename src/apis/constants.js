@@ -1,5 +1,5 @@
 export const HOST = {
-  url: 'http://3.135.61.45:8082',
+  url: 'http://192.168.1.5:3000',
 };
 export const mainApi = {
   baseUrl: `${HOST.url}/api`,
