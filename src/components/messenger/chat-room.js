@@ -53,6 +53,8 @@ import {
   sendFile,
 } from '../../redux/actions/socket-actions';
 import {setChatRoomMessages} from '../../redux/actions/messenger-actions';
+import {HOST} from '../../apis/constants';
+import {uploadAttachment} from '../../apis/chat-operations';
 
 const Blob = RNFetchBlob.polyfill.Blob;
 const fs = RNFetchBlob.fs;
@@ -65,6 +67,7 @@ export default (ChatRoom = () => {
   const utils = useSelector(state => state.utils);
   const dispatch = useDispatch();
   const ws = utils.ws;
+  const token = utils.token;
   const inputRef = useRef();
 
   const loggedInUser = loggedInUserData.userData
@@ -183,8 +186,9 @@ export default (ChatRoom = () => {
   }, [messages]);
 
   const formatMessages = () => {
-    //console.log(chatRoomMessages[0]);
+    // console.log(chatRoomMessages[0]);
     var messageData = [];
+
     chatRoomMessages.forEach(message => {
       if (!message.deletedBy.includes(loggedInUser)) {
         messageData.push({
@@ -192,6 +196,7 @@ export default (ChatRoom = () => {
           createdAt: moment(message.createdAt),
           isDeleted: message.isDeleted,
           unread: message.unread,
+          system: message.t === 's',
           user: {
             _id: message.user._id,
             name: message.user.firstName + message.user.lastName,
@@ -232,8 +237,8 @@ export default (ChatRoom = () => {
     }
   };
   const pickImageHandler = () => {
-    Toast.show('Comming Soon', Toast.SHORT);
-    return;
+    // Toast.show('Comming Soon', Toast.SHORT);
+    // return;
     ImagePicker.showImagePicker(
       {title: 'Pick an Image', maxWidth: 800, maxHeight: 600},
       res => {
@@ -255,19 +260,24 @@ export default (ChatRoom = () => {
     );
   };
   const openFilePicker = async () => {
-    Toast.show('Comming Soon', Toast.SHORT);
-    return;
+    // Toast.show('Comming Soon', Toast.SHORT);
+    // return;
     try {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
-      // const file_type = mime.contentType(res.fileName);
-      // const base64 = await RNFS.readFile(res.uri, 'base64');
-
-      let uploadData = new FormData();
-      uploadData.append('submit', 'ok');
-      uploadData.append('file', {type: res.type, uri: res.uri, name: res.name});
-      sendFile(uploadData, id, '', newMsg => {});
+      const file = {
+        uri: res.uri,
+        name: res.name,
+        type: res.type,
+      };
+      uploadAttachment(file, utils.token)
+        .then(res => {
+          console.log(res);
+        })
+        .catch(err => {
+          consoole.log(err);
+        });
     } finally {
       null;
     }

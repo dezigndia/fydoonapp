@@ -22,12 +22,13 @@ import NewGroupHeader from '../../../components/groups/new-group-header';
 import {Avatar, Badge, Icon} from 'react-native-elements';
 import FAB from '../../../components/fab/fab';
 import Toast from 'react-native-simple-toast';
-import {initiateGroupChat} from '../../../apis/chat-operations';
+import {initiateGroupChat, uploadRoomPic} from '../../../apis/chat-operations';
 import ImagePicker from 'react-native-image-picker';
 import {getChatsLists} from '../../../websocket-apis/methods';
 import {updateChatList} from '../../../redux/actions/detect-changes-actions';
 import EmojiSelector, {Categories} from 'react-native-emoji-selector';
 import _ from 'lodash';
+import {createPrivateGroup} from '../../../redux/actions/socket-actions';
 
 const NewGroupScreen = props => {
   const friends = useSelector(state => state.contacts.contacts.friends);
@@ -52,26 +53,36 @@ const NewGroupScreen = props => {
       data.append('DISPLAY_PIC', img.data);
     }
 
-    const allParticipantsIds = selectedMembers.map(item => item.username);
+    const allParticipantsIds = selectedMembers.map(item => item._id);
 
-    data.append('participants', allParticipantsIds.join(','));
-
-    initiateGroupChat(utils.token, data)
-      .then(res => {
-        // console.log(res);
-        setLoading(false);
-
-        props.navigation.popToTop();
-        if (ws && ws.readyState === ws.OPEN) {
-          ws.send(getChatsLists('list_of_chat'));
+    createPrivateGroup(allParticipantsIds, groupName, (isSuccessFull, data) => {
+      if (isSuccessFull) {
+        if (img) {
+          const input = {
+            profileImage: 'data:' + img.type + ';base64,' + img.data,
+          };
+          uploadRoomPic(input, data._id, utils.token)
+            .then(() => {
+              setLoading(false);
+              props.navigation.popToTop();
+              Toast.show('Group created', Toast.SHORT);
+            })
+            .catch(err => {
+              setLoading(false);
+              props.navigation.popToTop();
+              Toast.show('Group created without photo', Toast.SHORT);
+            });
+        } else {
+          setLoading(false);
+          props.navigation.popToTop();
+          Toast.show('Group created', Toast.SHORT);
         }
-        //  Toast.show('Refresh!', Toast.SHORT);
-      })
-      .catch(err => {
+      } else {
         setLoading(false);
-        console.log(err.response, 'create group chat api error');
+
         Toast.show('Unable to create this group!', Toast.SHORT);
-      });
+      }
+    });
   }
 
   const pickImageHandler = () => {
@@ -93,6 +104,7 @@ const NewGroupScreen = props => {
   //     dispatch(updateChatList(!detectChanges.changeChatList));
   //   };
   // }, []);
+
   return (
     <>
       <StatusBar
@@ -120,7 +132,13 @@ const NewGroupScreen = props => {
                 size: 32,
               }}
               rounded
-              source={img}
+              source={
+                img
+                  ? {
+                      uri: 'data:' + img.type + ';base64,' + img.data,
+                    }
+                  : null
+              }
               size={'medium'}
               containerStyle={{
                 backgroundColor: 'lightgrey',

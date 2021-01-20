@@ -154,3 +154,48 @@ export const reportUser = (token, data, repotedUserid) =>
         reject(error);
       });
   });
+
+export const uploadRoomPic = (data, roomId, token) =>
+  new Promise((resolve, reject) => {
+    axios({
+      method: 'put',
+      url: `${mainApi.baseUrl}/rooms/pic/${roomId}`,
+      headers: {
+        Authorization: 'Bearer ' + token,
+      },
+      data: data,
+      responseType: 'json',
+    })
+      .then(res => {
+        if (res.status === 200) {
+          resolve(res.data);
+        } else reject(res);
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+
+export const uploadAttachment = (file, token) => {
+  return new Promise((resolve, reject) => {
+    const data = new FormData();
+    data.append('file', file);
+    axios({
+      method: 'post',
+      url: `${mainApi.baseUrl}/attachments`,
+      headers: {
+        Authorization: 'Bearer ' + token,
+      },
+      data: data,
+      responseType: 'json',
+    })
+      .then(res => {
+        if (res.status === 200) {
+          resolve(res.data);
+        } else reject(res);
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+};

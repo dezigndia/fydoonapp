@@ -61,7 +61,6 @@ export default function Inbox({navigation, route}) {
   // console.log(subscriptions);
   const getMessenger = () => {
     let messenger = [];
-
     subscriptions.forEach(item => {
       if (item.t === 'd') {
         messenger.push({
@@ -91,7 +90,7 @@ export default function Inbox({navigation, route}) {
           isGroup: false,
           participant_two_number: item.user.phone.number || '',
         });
-      } else if (item.t === 'c') {
+      } else if (item.t === 'c' || item.t === 'p') {
         //  console.log(item.id);
         messenger.push({
           id: item.roomId,

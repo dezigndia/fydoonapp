@@ -1,6 +1,4 @@
 import {io} from 'socket.io-client';
-import SocketIO from 'socket.io-client';
-import SocketIOFileClient from 'socket.io-file-client';
 
 import {HOST} from '../../apis/constants';
 import {SOCKET_IO} from './action-types';
@@ -51,12 +49,11 @@ export const connectSocketIo = token => {
       origins: '*',
       transports: ['websocket'],
       allowUpgrades: false,
-      pingTimeout: 30000,
+      pingTimeout: 60000,
+      pingInterval: 25000,
       query: {auth_token: token},
     });
     // console.log(token);
-    var fileSocket = SocketIO(HOST.url);
-    uploader = new SocketIOFileClient(fileSocket);
     socket.on(CONNECT, () => {
       console.log('Socket Connected');
       dispatch(connectSuccess(true));
@@ -103,7 +100,7 @@ export const getSubscriptions = dispatch => {
   if (socket) {
     socket.emit(ChatEvent.SUBSCRIPTIONS);
     socket.on(ChatEvent.SUBSCRIPTIONS, data => {
-      // console.log('subscriptions-socket', data);
+      //console.log('subscriptions-socket', data);
       if (!data.error && data.data) {
         if (isFunction(dispatch)) {
           dispatch(subscriptions(data.data));
@@ -253,30 +250,65 @@ export const clearChatHistory = (roomId, callBack) => {
   }
 };
 
-export const sendFile = (file, roomId, msg = '', callBack) => {
-  if (uploader) {
-    var uploadIds = uploader.upload(file, {
-      data: {
-        roomId,
-        msg,
-      },
+export const createPrivateGroup = (userIds, name, callBack) => {
+  if (socket) {
+    const input = {
+      userIds,
+      name,
+    };
+    console.log(input);
+    socket.emit(ChatEvent.CREATE_PRIVATE_GROUP, input);
+    socket.on(ChatEvent.CREATE_PRIVATE_GROUP, data => {
+      console.log(data);
+      if (!data.error && data.data) {
+        callBack(true, data.data);
+      }
     });
+  } else {
+    callBack(false, null);
+    connectSocketIo();
+  }
+};
+export const exitGroup = (roomId, callBack) => {
+  if (socket) {
+    const input = {
+      roomId,
+    };
+    //console.log(input);
+    socket.emit(ChatEvent.EXIT_GROUP, input);
+    socket.on(ChatEvent.EXIT_GROUP, data => {
+      if (!data.error && data.data) {
+        callBack(true, data.data);
+      }
+    });
+  } else {
+    callBack(false, null);
+    connectSocketIo();
+  }
+};
 
-    uploader.on('start', function(fileInfo) {
-      console.log('Start uploading', fileInfo);
+export const sendAttachmentMessage = (
+  roomId,
+  attachmentId,
+  msg = '',
+  callBack,
+) => {
+  if (socket) {
+    const input = {
+      roomId,
+      msg,
+      attachmentId,
+    };
+    //console.log(input);
+    socket.emit(ChatEvent.SEND_ATTACHMENT_MESSAGE, input);
+    socket.on(ChatEvent.SEND_ATTACHMENT_MESSAGE, data => {
+      if (!data.error && data.data) {
+        callBack(true, data.data);
+      }
     });
-    uploader.on('stream', function(fileInfo) {
-      console.log('Streaming... sent ' + fileInfo.sent + ' bytes.');
-    });
-    uploader.on('complete', function(fileInfo) {
-      console.log('Upload Complete', fileInfo);
-    });
-    uploader.on('error', function(err) {
-      console.log('Error!', err);
-    });
-    uploader.on('abort', function(fileInfo) {
-      console.log('Aborted: ', fileInfo);
-    });
+  } else {
+    callBack(false, null);
+    connectSocketIo();
   }
 };
 function isFunction(functionToCheck) {

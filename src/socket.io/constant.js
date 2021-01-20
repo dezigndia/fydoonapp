@@ -21,4 +21,7 @@ export const ChatEvent = {
   DELETE_MESSAGE_FOR_EVERYONE: 'deleteMessageForEveryone',
   READ_MESSAGE: 'readMessages',
   CLEAR_CHAT_HISTORY: 'clearChatHistory',
+  CREATE_PUBLIC_GROUP: 'createChannel',
+  CREATE_PRIVATE_GROUP: 'createPrivateGroup',
+  SEND_ATTACHMENT_MESSAGE: 'sendAttachmentMessage',
 };

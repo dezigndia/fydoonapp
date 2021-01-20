@@ -136,14 +136,14 @@ const ContactScreen = (props) => {
         }
         style={styles.mainContainer}
         showsVerticalScrollIndicator={false}>
-        {/* <ContactListItem
+        <ContactListItem
           iconColor={BaseBackgroundColors.profileColor}
           iconName={'account-multiple'}
           iconType={'material-community'}
           txtLeftTitle="New Group"
           avatarStyle={styles.avatarStyle}
           onPress={() => handleNewGroup()}
-        /> */}
+        />
         {/* <ContactListItem
           iconColor={BaseBackgroundColors.profileColor}
           onPress={() =>
@@ -217,6 +217,15 @@ const ContactScreen = (props) => {
                       `Send an invitation to ${
                         item.firstName ? item.firstName : item.phone
                       }`,
+                      [
+                        {
+                          text: 'Cancel',
+                          onPress: () => console.log('Cancel Pressed'),
+                          style: 'cancel',
+                        },
+                        {text: 'OK', onPress: () => console.log('OK Pressed')},
+                      ],
+                      {cancelable: false},
                     )
                   }
                   txtLeftTitle={item.firstName ? item.firstName : item.phone}
