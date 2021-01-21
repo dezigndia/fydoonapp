@@ -28,7 +28,12 @@ import {getChatsLists} from '../../../websocket-apis/methods';
 import {updateChatList} from '../../../redux/actions/detect-changes-actions';
 import EmojiSelector, {Categories} from 'react-native-emoji-selector';
 import _ from 'lodash';
-import {createPrivateGroup} from '../../../redux/actions/socket-actions';
+import moment from 'moment';
+import {
+  createPrivateGroup,
+  joinRoom,
+} from '../../../redux/actions/socket-actions';
+import {setChatFriend} from '../../../redux/actions/messenger-actions';
 
 const NewGroupScreen = props => {
   const friends = useSelector(state => state.contacts.contacts.friends);
@@ -47,15 +52,11 @@ const NewGroupScreen = props => {
 
   function handlGroupChat() {
     setLoading(true);
-    let data = new FormData();
-    data.append('GROUP_NAME', groupName);
-    if (img) {
-      data.append('DISPLAY_PIC', img.data);
-    }
 
     const allParticipantsIds = selectedMembers.map(item => item._id);
 
     createPrivateGroup(allParticipantsIds, groupName, (isSuccessFull, data) => {
+      console.log(data);
       if (isSuccessFull) {
         if (img) {
           const input = {
@@ -64,17 +65,21 @@ const NewGroupScreen = props => {
           uploadRoomPic(input, data._id, utils.token)
             .then(() => {
               setLoading(false);
-              props.navigation.popToTop();
+              gotoRoom(data);
+              // props.navigation.popToTop();
               Toast.show('Group created', Toast.SHORT);
             })
             .catch(err => {
               setLoading(false);
-              props.navigation.popToTop();
+              gotoRoom(data);
+              //  props.navigation.popToTop();
+
               Toast.show('Group created without photo', Toast.SHORT);
             });
         } else {
           setLoading(false);
-          props.navigation.popToTop();
+          gotoRoom(data);
+          // props.navigation.popToTop();
           Toast.show('Group created', Toast.SHORT);
         }
       } else {
@@ -104,7 +109,12 @@ const NewGroupScreen = props => {
   //     dispatch(updateChatList(!detectChanges.changeChatList));
   //   };
   // }, []);
-
+  function gotoRoom(data) {
+    const roomObj = getRoomObj(data);
+    dispatch(setChatFriend(roomObj));
+    joinRoom(roomObj.id);
+    props.navigation.navigate('messenger');
+  }
   return (
     <>
       <StatusBar
@@ -299,6 +309,24 @@ function getName(userDetails) {
     ''
   );
 }
-function getPhone(userDetails) {
-  return userDetails.phone.code + ' ' + userDetails.phone.number || '';
+function getRoomObj(item) {
+  return {
+    id: item._id,
+    roomId: item._id,
+    participant_two: '',
+    roomDisplayName: item.name || item.user.phone.number || '',
+    numberOfmessage: item.unreadCount,
+    isActive: false,
+    message: item.message ? item.message.msg : '',
+    image: null,
+    date: item.message
+      ? moment(item.message.updatedAt).format('MMMM Do YYYY')
+      : moment(item.updatedAt).format('MMMM Do YYYY'),
+    time: item.message
+      ? moment(item.message.updatedAt).format('h:mm a')
+      : moment(item.updatedAt).format('h:mm a'),
+    lastLogin: '',
+    type: 'g',
+    isGroup: true,
+  };
 }

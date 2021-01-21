@@ -86,7 +86,7 @@ const MessengerHeader = ({navigation}) => {
     <View style={styles.headerContianer}>
       <TouchableOpacity
         onPress={() => {
-          navigation.goBack();
+          navigation.popToTop();
           dispatch(updateChatList(!detectChanges.changeChatList));
         }}>
         <Icon

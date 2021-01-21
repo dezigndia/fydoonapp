@@ -1,17 +1,62 @@
 import React from 'react';
+import {TouchableOpacity} from 'react-native';
 import {View} from 'react-native';
-import {MessageText, Time} from 'react-native-gifted-chat';
+import {MessageText, Bubble, Time} from 'react-native-gifted-chat';
+
+// const ChatBubble = props => {
+//   const {position, children, currentMessage, uri} = props;
+//   console.log(props);
+//   return (
+//     <TouchableOpacity
+//       style={styles[position].container}
+//       activeOpacity={0.9}
+//       {...props}>
+//       <View style={styles[position].wrapper}>
+//         {children}
+//         <MessageText
+//           {...props}
+//           currentMessage={{text: currentMessage.file || currentMessage.text}}
+//         />
+//         <Time {...props} />
+//       </View>
+//     </TouchableOpacity>
+//   );
+// };
 
 const ChatBubble = props => {
   const {position, children, currentMessage, uri} = props;
+
   return (
-    <View style={styles[position].container}>
-      <View style={styles[position].wrapper}>
-        <MessageText {...props} />
-        {children}
-        <Time {...props} />
-      </View>
-    </View>
+    <Bubble
+      {...props}
+      currentMessage={{text: currentMessage.file || currentMessage.text}}
+      wrapperStyle={{
+        right: {
+          // Here is the color change
+          backgroundColor: '#DCF8C6',
+
+          borderTopLeftRadius: 12,
+          borderBottomLeftRadius: 12,
+
+          flexDirection: 'row',
+        },
+        left: {
+          backgroundColor: 'white',
+
+          borderTopRightRadius: 12,
+          borderBottomRightRadius: 12,
+        },
+      }}
+      textStyle={{
+        right: {
+          color: '#636363',
+        },
+        left: {
+          color: '#636363',
+        },
+      }}>
+      {children}
+    </Bubble>
   );
 };
 

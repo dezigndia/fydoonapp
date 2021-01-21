@@ -53,7 +53,7 @@ export const connectSocketIo = token => {
       pingInterval: 25000,
       query: {auth_token: token},
     });
-    // console.log(token);
+    console.log(token);
     socket.on(CONNECT, () => {
       console.log('Socket Connected');
       dispatch(connectSuccess(true));
@@ -100,7 +100,7 @@ export const getSubscriptions = dispatch => {
   if (socket) {
     socket.emit(ChatEvent.SUBSCRIPTIONS);
     socket.on(ChatEvent.SUBSCRIPTIONS, data => {
-      //console.log('subscriptions-socket', data);
+      // console.log('subscriptions-socket', data);
       if (!data.error && data.data) {
         if (isFunction(dispatch)) {
           dispatch(subscriptions(data.data));
@@ -185,7 +185,7 @@ export const deleteMessageForMe = (roomId, messageIdToDelete, callBack) => {
       roomId,
       msgId: messageIdToDelete,
     };
-    console.log(input);
+    // console.log(input);
     socket.emit(ChatEvent.DELETE_MESSAGE_FOR_ME, input);
     socket.on(ChatEvent.DELETE_MESSAGE_FOR_ME, data => {
       if (!data.error && data.data) {
@@ -259,7 +259,6 @@ export const createPrivateGroup = (userIds, name, callBack) => {
     console.log(input);
     socket.emit(ChatEvent.CREATE_PRIVATE_GROUP, input);
     socket.on(ChatEvent.CREATE_PRIVATE_GROUP, data => {
-      console.log(data);
       if (!data.error && data.data) {
         callBack(true, data.data);
       }
@@ -287,27 +286,16 @@ export const exitGroup = (roomId, callBack) => {
   }
 };
 
-export const sendAttachmentMessage = (
-  roomId,
-  attachmentId,
-  msg = '',
-  callBack,
-) => {
+export const sendAttachmentMessage = (roomId, attachmentId, msg = '') => {
   if (socket) {
     const input = {
       roomId,
       msg,
       attachmentId,
     };
-    //console.log(input);
+    console.log(input);
     socket.emit(ChatEvent.SEND_ATTACHMENT_MESSAGE, input);
-    socket.on(ChatEvent.SEND_ATTACHMENT_MESSAGE, data => {
-      if (!data.error && data.data) {
-        callBack(true, data.data);
-      }
-    });
   } else {
-    callBack(false, null);
     connectSocketIo();
   }
 };

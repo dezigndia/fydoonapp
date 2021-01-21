@@ -62,6 +62,7 @@ export default function Inbox({navigation, route}) {
   const getMessenger = () => {
     let messenger = [];
     subscriptions.forEach(item => {
+      // console.log(item);
       if (item.t === 'd') {
         messenger.push({
           id: item.roomId,
@@ -74,7 +75,7 @@ export default function Inbox({navigation, route}) {
             '',
           numberOfmessage: item.unreadCount,
           isActive: false,
-          message: item.message ? item.message.msg : '',
+          message: getMeassageText(item),
           image:
             item.user.profileImage && !_.isEmpty(item.user.profileImage)
               ? item.user.profileImage
@@ -99,8 +100,8 @@ export default function Inbox({navigation, route}) {
           roomDisplayName: item.name || item.user.phone.number || '',
           numberOfmessage: item.unreadCount,
           isActive: false,
-          message: item.message ? item.message.msg : '',
-          image: '',
+          message: getMeassageText(item),
+          image: null,
           date: item.message
             ? moment(item.message.updatedAt).format('MMMM Do YYYY')
             : moment(item.updatedAt).format('MMMM Do YYYY'),
@@ -236,4 +237,16 @@ export default function Inbox({navigation, route}) {
       />
     </>
   );
+}
+
+function getMeassageText(item) {
+  if (item.message) {
+    if (item.message.attachments && item.message.attachments.length > 0) {
+      return item.message.attachments[0].filename;
+    } else {
+      return item.message.msg;
+    }
+  } else {
+    return '';
+  }
 }

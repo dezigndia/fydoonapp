@@ -47,6 +47,7 @@ import {
   getChatsLists,
   getRecentMessage,
   sendSocketMessage,
+  sendAttachmentMessage,
   readMessages,
   deleteMessageForEveryone,
   deleteMessageForMe,
@@ -107,20 +108,7 @@ export default (ChatRoom = () => {
     formatMessages();
     getChatsLists(dispatch);
     getRecentMessage(newMsg => {
-      const msgObj = [
-        {
-          _id: newMsg._id,
-          createdAt: moment(newMsg.createdAt),
-          isDeleted: newMsg.isDeleted,
-          deletedBy: newMsg.deletedBy,
-          unread: false,
-          user: {
-            _id: newMsg.user._id,
-            name: newMsg.user.firstName + newMsg.user.lastName,
-          },
-          text: newMsg.msg,
-        },
-      ];
+      const msgObj = [getMessageObj(newMsg)];
       readMessages(id, [newMsg._id]);
 
       setMessages(previousArr => GiftedChat.append(previousArr, msgObj));
@@ -191,19 +179,8 @@ export default (ChatRoom = () => {
 
     chatRoomMessages.forEach(message => {
       if (!message.deletedBy.includes(loggedInUser)) {
-        messageData.push({
-          _id: message._id,
-          createdAt: moment(message.createdAt),
-          isDeleted: message.isDeleted,
-          unread: message.unread,
-          system: message.t === 's',
-          user: {
-            _id: message.user._id,
-            name: message.user.firstName + message.user.lastName,
-          },
-          text: message.msg,
-          isDeleted: message.isDeleted,
-        });
+        let msgObj = getMessageObj(message);
+        messageData.push(msgObj);
       }
     });
 
@@ -215,6 +192,42 @@ export default (ChatRoom = () => {
     setMessages(updateMsg);
     setMessagesStatus('recieved');
   };
+  function getMessageObj(message) {
+    let msgObj = {
+      _id: message._id,
+      createdAt: moment(message.createdAt),
+      isDeleted: message.isDeleted,
+      unread: message.unread,
+      system: message.t === 's',
+      user: {
+        _id: message.user._id,
+        name: message.user.firstName + ' ' + message.user.lastName,
+      },
+
+      isDeleted: message.isDeleted,
+    };
+
+    let msgKey = '';
+    let msgValue = '';
+    let msgUrl = '';
+
+    if (message.attachments && message.attachments.length > 0) {
+      // msgKey = message.attachments[0].contentType.split('/').shift();
+      msgKey = 'file';
+      msgValue = message.attachments[0].filename;
+      msgUrl = message.attachments[0].url;
+    } else if (!message.attachments || message.attachments.length == 0) {
+      msgKey = 'text';
+      msgValue = message.msg;
+    }
+
+    msgObj[msgKey] = msgValue;
+    if (msgUrl) {
+      msgObj['url'] = msgUrl;
+    }
+
+    return msgObj;
+  }
   function handleReadMeassages() {
     let messageIds = [];
     messages.forEach(message => {
@@ -237,8 +250,6 @@ export default (ChatRoom = () => {
     }
   };
   const pickImageHandler = () => {
-    // Toast.show('Comming Soon', Toast.SHORT);
-    // return;
     ImagePicker.showImagePicker(
       {title: 'Pick an Image', maxWidth: 800, maxHeight: 600},
       res => {
@@ -247,21 +258,17 @@ export default (ChatRoom = () => {
         } else if (res.error) {
           console.log('Error', res.error);
         } else {
-          let uploadData = new FormData();
-          uploadData.append('submit', 'ok');
-          uploadData.append('file', {
+          const file = {
             type: res.type,
             uri: res.uri,
             name: res.fileName,
-          });
-          sendFile(uploadData, id, '', newMsg => {});
+          };
+          uploadFile(file);
         }
       },
     );
   };
   const openFilePicker = async () => {
-    // Toast.show('Comming Soon', Toast.SHORT);
-    // return;
     try {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
@@ -271,21 +278,25 @@ export default (ChatRoom = () => {
         name: res.name,
         type: res.type,
       };
-      uploadAttachment(file, utils.token)
-        .then(res => {
-          console.log(res);
-        })
-        .catch(err => {
-          consoole.log(err);
-        });
+      uploadFile(file);
     } finally {
       null;
     }
   };
 
+  function uploadFile(file) {
+    uploadAttachment(file, utils.token)
+      .then(res => {
+        if (res && res.data) {
+          sendAttachmentMessage(id, res.data.attachmentId, '');
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  }
+
   const handleAudio = async () => {
-    Toast.show('Comming Soon', Toast.SHORT);
-    return;
     if (recordingStatus === '') {
       setRecordingStatus('start');
       currRecordingFileTime = Date.now();
@@ -295,34 +306,31 @@ export default (ChatRoom = () => {
       );
       await AudioRecorder.startRecording();
     } else {
-      setRecordingStatus('done');
+      setRecordingStatus('');
       await AudioRecorder.stopRecording();
       const audioPath = `${
         AudioUtils.DocumentDirectoryPath
       }/${currRecordingFileTime}test`;
 
-      const fileName = `${audioPath}.aac`;
+      const fileName = `${currRecordingFileTime}test.acc`;
 
       const file = {
         uri: Platform.OS === 'ios' ? audioPath : `file://${audioPath}`,
-        name: `${currRecordingFileTime}test.acc`,
+        name: fileName,
         type: `audio/aac`,
       };
-      let uploadData = new FormData();
-      uploadData.append('submit', 'ok');
-      uploadData.append('file', file);
-      sendFile(uploadData, id, '', newMsg => {});
-      console.log(file);
+
+      uploadFile(file);
     }
   };
   const handleCancelRecording = async () => {
     if (recordingStatus === 'start') {
-      setRecordingStatus('cancel');
+      setRecordingStatus('');
       await AudioRecorder.stopRecording();
     }
   };
   const handleStopRecording = async () => {
-    setRecordingStatus('done');
+    setRecordingStatus('');
     await AudioRecorder.stopRecording();
   };
 
@@ -372,6 +380,7 @@ export default (ChatRoom = () => {
       })
       .catch(error => {
         // error
+        Toast.show('Failed to open', Toast.SHORT);
         console.log(error);
       });
   }
@@ -397,7 +406,9 @@ export default (ChatRoom = () => {
     });
   }
   const handleBubbleLongPress = (context, messageToDelete) => {
+    //console.log(context, messageToDelete);
     if (
+      messageToDelete &&
       messageToDelete.user._id === loggedInUser &&
       !messageToDelete.isDeleted
     ) {
@@ -430,6 +441,7 @@ export default (ChatRoom = () => {
         },
       );
     } else if (
+      messageToDelete &&
       messageToDelete.user._id !== loggedInUser &&
       !messageToDelete.isDeleted
     ) {
@@ -621,41 +633,73 @@ export default (ChatRoom = () => {
 function renderBubble(props) {
   return (
     <>
-      {props.currentMessage.audio ? (
+      {/* {props.currentMessage.audio ? (
         renderAudio(props)
       ) : props.currentMessage.file ? (
         renderFile(props)
-      ) : (
-        <Bubble
-          {...props}
-          {...RenderMessageAudioProps}
-          wrapperStyle={{
-            right: {
-              // Here is the color change
-              backgroundColor: '#DCF8C6',
+      ) : ( */}
+      <Bubble
+        {...props}
+        {...RenderMessageAudioProps}
+        touchableProps={{
+          onPress: () => {
+            if (props.currentMessage.file) {
+              props.openFileViewr(props.currentMessage.url);
+            } else if (props.onPress) {
+              // props.onPres();
+            }
+          },
+        }}
+        renderCustomView={() => (
+          <>
+            {props.currentMessage.file && (
+              <View
+                style={{
+                  paddingTop: 10,
+                  paddingBottom: 5,
+                  paddingHorizontal: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                <Icon name="play" type="font-awesome" size={16} color="grey" />
+                <Text style={{color: 'grey', marginLeft: 5}}>
+                  Tap to open file
+                </Text>
+              </View>
+            )}
+          </>
+        )}
+        currentMessage={{
+          ...props.currentMessage,
+          text: props.currentMessage.file || props.currentMessage.text,
+        }}
+        wrapperStyle={{
+          right: {
+            // Here is the color change
+            backgroundColor: '#DCF8C6',
 
-              borderTopLeftRadius: 12,
-              borderBottomLeftRadius: 12,
+            borderTopLeftRadius: 12,
+            borderBottomLeftRadius: 12,
 
-              flexDirection: 'row',
-            },
-            left: {
-              backgroundColor: 'white',
+            flexDirection: 'row',
+          },
+          left: {
+            backgroundColor: 'white',
 
-              borderTopRightRadius: 12,
-              borderBottomRightRadius: 12,
-            },
-          }}
-          textStyle={{
-            right: {
-              color: '#636363',
-            },
-            left: {
-              color: '#636363',
-            },
-          }}
-        />
-      )}
+            borderTopRightRadius: 12,
+            borderBottomRightRadius: 12,
+          },
+        }}
+        textStyle={{
+          right: {
+            color: '#636363',
+          },
+          left: {
+            color: '#636363',
+          },
+        }}
+      />
+      {/* )} */}
     </>
   );
 }
@@ -967,18 +1011,19 @@ const renderAudio = props => {
 
 const renderFile = props => {
   return (
-    <ChatBubble {...props}>
-      <TouchableOpacity
+    <ChatBubble
+      {...props}
+      onPress={() => props.openFileViewr(props.currentMessage.url)}>
+      <View
         style={{
-          paddingVertical: 20,
+          paddingVertical: 5,
           paddingHorizontal: 10,
           flexDirection: 'row',
           alignItems: 'center',
-        }}
-        onPress={() => props.openFileViewr(props.currentMessage.file)}>
+        }}>
         <Icon name="play" type="font-awesome" size={16} color="grey" />
         <Text style={{color: 'grey', marginLeft: 5}}>Tap to open file</Text>
-      </TouchableOpacity>
+      </View>
     </ChatBubble>
   );
 };
