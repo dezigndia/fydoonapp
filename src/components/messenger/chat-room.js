@@ -301,7 +301,7 @@ export default (ChatRoom = () => {
       setRecordingStatus('start');
       currRecordingFileTime = Date.now();
       await AudioRecorder.prepareRecordingAtPath(
-        `${AudioUtils.DocumentDirectoryPath}/${currRecordingFileTime}test.aac`,
+        `${AudioUtils.DocumentDirectoryPath}/audio${currRecordingFileTime}.aac`,
         recordingSettings,
       );
       await AudioRecorder.startRecording();
@@ -310,16 +310,15 @@ export default (ChatRoom = () => {
       await AudioRecorder.stopRecording();
       const audioPath = `${
         AudioUtils.DocumentDirectoryPath
-      }/${currRecordingFileTime}test`;
+      }/audio${currRecordingFileTime}.aac`;
 
-      const fileName = `${currRecordingFileTime}test.acc`;
+      const fileName = `audio${currRecordingFileTime}.acc`;
 
       const file = {
         uri: Platform.OS === 'ios' ? audioPath : `file://${audioPath}`,
         name: fileName,
         type: `audio/aac`,
       };
-
       uploadFile(file);
     }
   };
@@ -384,6 +383,7 @@ export default (ChatRoom = () => {
         console.log(error);
       });
   }
+
   function onDeleteMessageForMe(messageToDelete) {
     deleteMessageForMe(id, messageToDelete._id, () => {
       setMessages(previousState =>
