@@ -1,15 +1,15 @@
-import {io} from 'socket.io-client';
+import { io } from 'socket.io-client';
 
-import {HOST} from '../../apis/constants';
-import {SOCKET_IO} from './action-types';
+import { HOST } from '../../apis/constants';
+import { SOCKET_IO } from './action-types';
 import AsyncStorage from '@react-native-community/async-storage';
-import {SUBSCRIPTIONS} from './action-types';
-import {ChatEvent} from '../../socket.io/constant';
-import {setChatRoomMessages} from './messenger-actions';
-import {setContacts} from './contact-action';
-import {getContacts} from '../../utils/contacts-update';
+import { SUBSCRIPTIONS } from './action-types';
+import { ChatEvent, UserStatus } from '../../socket.io/constant';
+import { setChatRoomMessages } from './messenger-actions';
+import { setContacts } from './contact-action';
+import { getContacts } from '../../utils/contacts-update';
 
-const {CONNECT, DISCONNECT} = ChatEvent;
+const { CONNECT, DISCONNECT } = ChatEvent;
 
 let socket;
 var uploader;
@@ -46,23 +46,21 @@ export const connectSocketIo = token => {
     dispatch(connectRequest(true));
 
     socket = io(HOST.url, {
-      origins: '*',
-      transports: ['websocket'],
-      allowUpgrades: false,
-      pingTimeout: 60000,
-      pingInterval: 25000,
-      query: {auth_token: token},
+      query: { auth_token: token },
     });
+    socket.heartbeatTimeout = 100;
     console.log(token);
     socket.on(CONNECT, () => {
       console.log('Socket Connected');
       dispatch(connectSuccess(true));
       getSubscriptions(dispatch);
       sendContacts(token, dispatch);
+      changeStatus(UserStatus.online);
     });
     socket.on(DISCONNECT, error => {
       console.log('Socket Disconnected', error);
       dispatch(disconnect(false));
+      changeStatus(UserStatus.offline);
     });
   };
 };
@@ -295,6 +293,17 @@ export const sendAttachmentMessage = (roomId, attachmentId, msg = '') => {
     };
     console.log(input);
     socket.emit(ChatEvent.SEND_ATTACHMENT_MESSAGE, input);
+  } else {
+    connectSocketIo();
+  }
+};
+
+export const changeStatus = (status) => {
+  if (socket) {
+    const input = {
+      status
+    };
+    socket.emit(ChatEvent.CHANGE_STATUS, input);
   } else {
     connectSocketIo();
   }

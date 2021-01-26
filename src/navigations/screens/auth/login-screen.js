@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   StatusBar,
   SafeAreaView,
@@ -10,11 +10,11 @@ import {
   ActivityIndicator,
   ToastAndroid,
 } from 'react-native';
-import {connect, useDispatch} from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
 import CountryPicker from 'react-native-country-picker-modal';
 import image from '../../../assets/images/main.jpg';
-import {Button, SocialIcon, Icon} from 'react-native-elements';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import { Button, SocialIcon, Icon } from 'react-native-elements';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import OTPInputView from '@twotalltotems/react-native-otp-input';
 import {
   login,
@@ -27,8 +27,8 @@ import {
   setPK,
 } from '../../../redux/actions/utils-actions';
 import AsyncStorage from '@react-native-community/async-storage';
-import {BaseBackgroundColors} from '../../../styles/constants';
-import {loginStyles} from '../../../styles/login-styles';
+import { BaseBackgroundColors } from '../../../styles/constants';
+import { loginStyles } from '../../../styles/login-styles';
 import googleIcon from '../../../assets/images/google-icon.png';
 import fbIcon from '../../../assets/images/facebook-icon.png';
 import {
@@ -36,9 +36,10 @@ import {
   setUserDetails,
   setUserPrimaryKey,
 } from '../../../redux/actions/user-details-actions';
-import {getUserDetails} from '../../../apis/account-operations';
+import { getUserDetails } from '../../../apis/account-operations';
 import Toast from 'react-native-simple-toast';
-import {connectSocketIo} from '../../../redux/actions/socket-actions';
+import { connectSocketIo } from '../../../redux/actions/socket-actions';
+import { updatePushToken } from '../../../apis/chat-operations';
 
 const LoginScreen = props => {
   const [countryCode, setCountryCode] = useState({
@@ -132,8 +133,12 @@ const LoginScreen = props => {
           await AsyncStorage.setItem('token', res.data.token);
           await AsyncStorage.setItem('userId', res.data._id);
           await AsyncStorage.setItem('id', res.data._id);
+          const pushToken = await AsyncStorage.getItem('pushToken');
+          if (pushToken) {
+            updatePushToken(pushToken, res.data.token);
+          }
           dispatch(connectSocketIo(res.data.token));
-          const {token, firstTimeLogin, _id} = res.data;
+          const { token, firstTimeLogin, _id } = res.data;
 
           dispatch(setToken(token));
 
@@ -210,12 +215,12 @@ const LoginScreen = props => {
                     <ActivityIndicator
                       size={18}
                       color="white"
-                      style={{marginHorizontal: 10}}
+                      style={{ marginHorizontal: 10 }}
                     />
                   )
                 }
                 containerStyle={loginStyles.Submitbtn}
-                buttonStyle={{backgroundColor: '#485A96'}}
+                buttonStyle={{ backgroundColor: '#485A96' }}
                 onPress={() => {
                   if (!loading) {
                     sendOtp();
@@ -295,11 +300,11 @@ const LoginScreen = props => {
                     <ActivityIndicator
                       size={18}
                       color="white"
-                      style={{marginHorizontal: 10}}
+                      style={{ marginHorizontal: 10 }}
                     />
                   )
                 }
-                buttonStyle={{backgroundColor: '#485A96'}}
+                buttonStyle={{ backgroundColor: '#485A96' }}
                 onPress={() => {
                   if (!loading) {
                     verifyOtp();
@@ -318,11 +323,11 @@ const LoginScreen = props => {
                   marginTop: 20,
                   flexDirection: 'row',
                 }}>
-                <Text style={{fontSize: 16, marginRight: 10}}>
+                <Text style={{ fontSize: 16, marginRight: 10 }}>
                   Not Recieved?
                 </Text>
                 <Text
-                  style={{fontSize: 16, color: 'orange', fontWeight: 'bold'}}>
+                  style={{ fontSize: 16, color: 'orange', fontWeight: 'bold' }}>
                   {resendingOtp ? 'Resending OTP' : 'Resend OTP'}
                 </Text>
               </TouchableOpacity>
@@ -359,7 +364,7 @@ const LoginScreen = props => {
                   marginTop: 30,
                 }}
               />
-              <Text style={{alignSelf: 'center', marginTop: 20, fontSize: 20}}>
+              <Text style={{ alignSelf: 'center', marginTop: 20, fontSize: 20 }}>
                 Login with other Accounts?
               </Text>
               <View
@@ -373,7 +378,7 @@ const LoginScreen = props => {
                   containerStyle={loginStyles.socialBtnContainer}
                   buttonStyle={[
                     loginStyles.socialBtn,
-                    {backgroundColor: 'white', marginRight: 10},
+                    { backgroundColor: 'white', marginRight: 10 },
                   ]}
                   icon={() => (
                     <Image
@@ -381,19 +386,19 @@ const LoginScreen = props => {
                       style={loginStyles.socialBtnIcon}
                     />
                   )}
-                  titleStyle={{color: '#282828', fontSize: 18}}
+                  titleStyle={{ color: '#282828', fontSize: 18 }}
                 />
                 <Button
                   title="Facebook"
                   containerStyle={loginStyles.socialBtnContainer}
                   buttonStyle={[
                     loginStyles.socialBtn,
-                    {backgroundColor: '#485A96', marginLeft: 10},
+                    { backgroundColor: '#485A96', marginLeft: 10 },
                   ]}
                   icon={() => (
                     <Image source={fbIcon} style={loginStyles.socialBtnIcon} />
                   )}
-                  titleStyle={{color: 'white', fontSize: 18}}
+                  titleStyle={{ color: 'white', fontSize: 18 }}
                 />
               </View>
             </>

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {mainApi} from './constants';
+import { mainApi } from './constants';
 
 export const getChatRooms = token =>
   new Promise((resolve, reject) => {
@@ -191,6 +191,29 @@ export const uploadAttachment = (file, token) => {
     })
       .then(res => {
         if (res.status === 200) {
+          resolve(res.data);
+        } else reject(res);
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+};
+
+export const updatePushToken = (pushToken, token) => {
+  return new Promise((resolve, reject) => {
+    axios({
+      method: 'put',
+      url: `${mainApi.baseUrl}/push-notifications/token`,
+      headers: {
+        Authorization: 'Bearer ' + token,
+      },
+      data: { pushToken },
+      responseType: 'json',
+    })
+      .then(res => {
+        if (res.status === 200) {
+          console.log('updatePushToken', res);
           resolve(res.data);
         } else reject(res);
       })

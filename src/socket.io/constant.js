@@ -24,4 +24,11 @@ export const ChatEvent = {
   CREATE_PUBLIC_GROUP: 'createChannel',
   CREATE_PRIVATE_GROUP: 'createPrivateGroup',
   SEND_ATTACHMENT_MESSAGE: 'sendAttachmentMessage',
+  CLEAR_CHAT_HISTORY : 'clearChatHistory',
+  CHANGE_STATUS : 'changeStatus'
 };
+
+export const UserStatus = {
+  online: 'online',
+  offline: 'offline'
+}
