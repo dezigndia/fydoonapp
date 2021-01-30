@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-import { HOST } from '../../apis/constants';
+import { WS_HOST } from '../../apis/constants';
 import { SOCKET_IO } from './action-types';
 import AsyncStorage from '@react-native-community/async-storage';
 import { SUBSCRIPTIONS } from './action-types';
@@ -45,7 +45,7 @@ export const connectSocketIo = token => {
   return dispatch => {
     dispatch(connectRequest(true));
 
-    socket = io(HOST.url, {
+    socket = io(WS_HOST, {
       query: { auth_token: token },
     });
     socket.heartbeatTimeout = 100;
@@ -98,7 +98,7 @@ export const getSubscriptions = dispatch => {
   if (socket) {
     socket.emit(ChatEvent.SUBSCRIPTIONS);
     socket.on(ChatEvent.SUBSCRIPTIONS, data => {
-      // console.log('subscriptions-socket', data);
+      console.log('subscriptions-socket', data);
       if (!data.error && data.data) {
         if (isFunction(dispatch)) {
           dispatch(subscriptions(data.data));
@@ -308,6 +308,18 @@ export const changeStatus = (status) => {
     connectSocketIo();
   }
 };
+
+export const exitRoom = (roomId) => {
+  if (socket) {
+    const input = {
+      roomId
+    };
+    socket.emit(ChatEvent.EXIT_ROOM, input);
+  } else {
+    connectSocketIo();
+  }
+};
+
 function isFunction(functionToCheck) {
   return (
     functionToCheck && {}.toString.call(functionToCheck) === '[object Function]'

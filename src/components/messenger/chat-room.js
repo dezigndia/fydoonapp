@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,26 +20,26 @@ import {
 } from 'react-native-gifted-chat';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
-import {Platform} from 'react-native';
+import { Platform } from 'react-native';
 
 import * as mime from 'react-native-mime-types';
 import Sound from 'react-native-sound';
-import {BaseBackgroundColors} from '../../styles/constants';
-import {Icon} from 'react-native-elements';
-import {useDispatch, useSelector} from 'react-redux';
-import {open} from '../../websocket-apis/socket';
-import {wsUrl} from '../../websocket-apis/apis';
-import {fetchMessages, newMessage} from '../../websocket-apis/methods';
-import _, {sum} from 'lodash';
+import { BaseBackgroundColors } from '../../styles/constants';
+import { Icon } from 'react-native-elements';
+import { useDispatch, useSelector } from 'react-redux';
+import { open } from '../../websocket-apis/socket';
+import { wsUrl } from '../../websocket-apis/apis';
+import { fetchMessages, newMessage } from '../../websocket-apis/methods';
+import _, { sum } from 'lodash';
 import Toast from 'react-native-simple-toast';
 import moment from 'moment';
 import ImagePicker from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import RNFetchBlob from 'rn-fetch-blob';
-import {AudioRecorder, AudioUtils} from 'react-native-audio';
-import {checkPermission} from '../../utils/utils';
-import EmojiSelector, {Categories} from 'react-native-emoji-selector';
-import {styles} from '../../styles/messenger-styles';
+import { AudioRecorder, AudioUtils } from 'react-native-audio';
+import { checkPermission } from '../../utils/utils';
+import EmojiSelector, { Categories } from 'react-native-emoji-selector';
+import { styles } from '../../styles/messenger-styles';
 import VideoPlayer from '../players/videoplayer';
 import ChatBubble from '../players/chatbubble';
 import AudioPlayer from '../players/audioplayer';
@@ -51,11 +51,10 @@ import {
   readMessages,
   deleteMessageForEveryone,
   deleteMessageForMe,
-  sendFile,
+  exitRoom,
 } from '../../redux/actions/socket-actions';
-import {setChatRoomMessages} from '../../redux/actions/messenger-actions';
-import {HOST} from '../../apis/constants';
-import {uploadAttachment} from '../../apis/chat-operations';
+import { setChatRoomMessages } from '../../redux/actions/messenger-actions';
+import { uploadAttachment } from '../../apis/chat-operations';
 
 const Blob = RNFetchBlob.polyfill.Blob;
 const fs = RNFetchBlob.fs;
@@ -91,11 +90,11 @@ export default (ChatRoom = () => {
   const [isEmojiadded, setIsEmojiAdded] = useState(false);
 
   const [isChanged, setIsChanged] = useState(false);
-  const {currentChatFriend: currentRoom} = useSelector(
+  const { currentChatFriend: currentRoom } = useSelector(
     state => state.messenger,
   );
-  const {subscriptions} = useSelector(state => state.socket);
-  const {chatRoomMessages} = useSelector(state => state.messenger);
+  const { subscriptions } = useSelector(state => state.socket);
+  const { chatRoomMessages } = useSelector(state => state.messenger);
 
   const id = currentRoom.id;
   const anotherUser = currentRoom.participant_two;
@@ -172,6 +171,12 @@ export default (ChatRoom = () => {
   useEffect(() => {
     handleReadMeassages();
   }, [messages]);
+
+  useEffect(() => {
+    return () => {
+      exitRoom(id);
+    };
+  }, []);
 
   const formatMessages = () => {
     // console.log(chatRoomMessages[0]);
@@ -251,7 +256,7 @@ export default (ChatRoom = () => {
   };
   const pickImageHandler = () => {
     ImagePicker.showImagePicker(
-      {title: 'Pick an Image', maxWidth: 800, maxHeight: 600},
+      { title: 'Pick an Image', maxWidth: 800, maxHeight: 600 },
       res => {
         if (res.didCancel) {
           console.log('User cancelled!');
@@ -308,9 +313,8 @@ export default (ChatRoom = () => {
     } else {
       setRecordingStatus('');
       await AudioRecorder.stopRecording();
-      const audioPath = `${
-        AudioUtils.DocumentDirectoryPath
-      }/audio${currRecordingFileTime}.aac`;
+      const audioPath = `${AudioUtils.DocumentDirectoryPath
+        }/audio${currRecordingFileTime}.aac`;
 
       const fileName = `audio${currRecordingFileTime}.acc`;
 
@@ -398,7 +402,7 @@ export default (ChatRoom = () => {
       setMessages(previousState =>
         previousState.map(message =>
           message._id === messageToDelete._id
-            ? {...message, text: 'message deleted', isDeleted: true}
+            ? { ...message, text: 'message deleted', isDeleted: true }
             : message,
         ),
       );
@@ -513,9 +517,9 @@ export default (ChatRoom = () => {
           </>
         )}
         keyboardShouldPersistTaps="never"
-        user={{_id: loggedInUser}}
+        user={{ _id: loggedInUser }}
         renderMessageVideo={props =>
-          renderMessageVideo({...props, setVideoModal, openFileViewr})
+          renderMessageVideo({ ...props, setVideoModal, openFileViewr })
         }
         isKeyboardInternallyHandled={false}
         renderBubble={props =>
@@ -559,8 +563,8 @@ export default (ChatRoom = () => {
         minInputToolbarHeight={60}
         renderActions={renderActions}
         timeTextStyle={{
-          right: {color: '#636363', fontSize: 12},
-          left: {color: '#636363', fontSize: 12},
+          right: { color: '#636363', fontSize: 12 },
+          left: { color: '#636363', fontSize: 12 },
         }}
         renderDay={renderDay}
         renderAvatar={null}
@@ -662,7 +666,7 @@ function renderBubble(props) {
                   alignItems: 'center',
                 }}>
                 <Icon name="play" type="font-awesome" size={16} color="grey" />
-                <Text style={{color: 'grey', marginLeft: 5}}>
+                <Text style={{ color: 'grey', marginLeft: 5 }}>
                   Tap to open file
                 </Text>
               </View>
@@ -725,7 +729,7 @@ function renderInputToolbar(props) {
         {(props.recordingStatus === '' || props.recordingStatus === 'done') && (
           <>
             <TouchableOpacity
-              style={{alignSelf: 'flex-end', paddingVertical: 15}}
+              style={{ alignSelf: 'flex-end', paddingVertical: 15 }}
               onPress={() => {
                 if (props.showEmoji) {
                   props.inputRef.current.focus();
@@ -760,9 +764,9 @@ function renderInputToolbar(props) {
               selection={
                 props.isEmojiadded
                   ? {
-                      start: props.inputCursorPosition,
-                      end: props.inputCursorPosition,
-                    }
+                    start: props.inputCursorPosition,
+                    end: props.inputCursorPosition,
+                  }
                   : null
               }
               onFocus={async () => await props.setShowEmojiBoard(false)}
@@ -775,7 +779,7 @@ function renderInputToolbar(props) {
                 fontSize: 18,
                 maxHeight: 60,
               }}
-              onSelectionChange={({nativeEvent: {selection}}) => {
+              onSelectionChange={({ nativeEvent: { selection } }) => {
                 if (props.inputCursorPosition !== selection.end) {
                   props.setInputCursorPosition(selection.end);
                 }
@@ -791,26 +795,26 @@ function renderInputToolbar(props) {
 
             <>
               <TouchableOpacity
-                style={{alignSelf: 'flex-end', paddingVertical: 15}}
+                style={{ alignSelf: 'flex-end', paddingVertical: 15 }}
                 onPress={() => props.openFilePicker()}>
                 <Icon
                   name="paperclip"
                   type="font-awesome"
                   color="#707070"
                   size={26}
-                  style={{marginRight: 5}}
+                  style={{ marginRight: 5 }}
                 />
               </TouchableOpacity>
               {!props.isInputTyping && (
                 <TouchableOpacity
                   onPress={() => props.pickImageHandler()}
-                  style={{alignSelf: 'flex-end', paddingVertical: 15}}>
+                  style={{ alignSelf: 'flex-end', paddingVertical: 15 }}>
                   <Icon
                     name="camera"
                     type="font-awesome"
                     color="#707070"
                     size={26}
-                    style={{marginLeft: 5}}
+                    style={{ marginLeft: 5 }}
                   />
                 </TouchableOpacity>
               )}
@@ -819,7 +823,7 @@ function renderInputToolbar(props) {
         )}
         {props.recordingStatus === 'start' && (
           <>
-            <View style={{alignSelf: 'flex-end', paddingVertical: 15}}>
+            <View style={{ alignSelf: 'flex-end', paddingVertical: 15 }}>
               <Icon
                 name="keyboard-voice"
                 type="materialicons"
@@ -838,14 +842,14 @@ function renderInputToolbar(props) {
             </Text>
 
             <TouchableOpacity
-              style={{alignSelf: 'flex-end', paddingVertical: 15}}
+              style={{ alignSelf: 'flex-end', paddingVertical: 15 }}
               onPress={() => props.handleCancelRecording()}>
               <Icon
                 name="delete-forever"
                 type="material"
                 color="#707070"
                 size={26}
-                style={{marginRight: 5}}
+                style={{ marginRight: 5 }}
               />
             </TouchableOpacity>
           </>
@@ -888,15 +892,15 @@ function renderInputToolbar(props) {
               props.recordingStatus === '' || props.recordingStatus === 'done'
                 ? 'keyboard-voice'
                 : props.recordingStatus === 'start'
-                ? 'telegram-plane'
-                : ''
+                  ? 'telegram-plane'
+                  : ''
             }
             type={
               props.recordingStatus === '' || props.recordingStatus === 'done'
                 ? 'materialicons'
                 : props.recordingStatus === 'start'
-                ? 'font-awesome-5'
-                : ''
+                  ? 'font-awesome-5'
+                  : ''
             }
             size={28}
             color="white"
@@ -920,7 +924,7 @@ function renderSend(props) {
         type="font-awesome-5"
         size={32}
         color={BaseBackgroundColors.profileColor}
-        style={{paddingHorizontal: 8}}
+        style={{ paddingHorizontal: 8 }}
       />
     </Send>
   );
@@ -940,7 +944,7 @@ function renderComposer(props) {
 }
 function scrollToBottomComponent() {
   return (
-    <View style={{justifyContent: 'center', alignItems: 'center'}}>
+    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
       <Icon
         name="chevron-double-down"
         type="material-community"
@@ -978,13 +982,13 @@ function renderDay(props) {
         alignSelf: 'center',
         paddingHorizontal: 10,
       }}
-      textStyle={{color: '#282828', fontSize: 16}}
+      textStyle={{ color: '#282828', fontSize: 16 }}
     />
   );
 }
 
 const renderMessageVideo = props => {
-  const {currentMessage} = props;
+  const { currentMessage } = props;
 
   return (
     <TouchableOpacity
@@ -996,7 +1000,7 @@ const renderMessageVideo = props => {
       }}
       onPress={() => props.openFileViewr(currentMessage.video)}>
       <Icon name="play" type="font-awesome" size={16} color="grey" />
-      <Text style={{color: 'grey', marginLeft: 5}}>Tap to play video</Text>
+      <Text style={{ color: 'grey', marginLeft: 5 }}>Tap to play video</Text>
     </TouchableOpacity>
   );
 };
@@ -1022,7 +1026,7 @@ const renderFile = props => {
           alignItems: 'center',
         }}>
         <Icon name="play" type="font-awesome" size={16} color="grey" />
-        <Text style={{color: 'grey', marginLeft: 5}}>Tap to open file</Text>
+        <Text style={{ color: 'grey', marginLeft: 5 }}>Tap to open file</Text>
       </View>
     </ChatBubble>
   );
