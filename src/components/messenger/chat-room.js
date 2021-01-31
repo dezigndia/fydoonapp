@@ -30,7 +30,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { open } from '../../websocket-apis/socket';
 import { wsUrl } from '../../websocket-apis/apis';
 import { fetchMessages, newMessage } from '../../websocket-apis/methods';
-import _, { sum } from 'lodash';
+import _, { sum, isEmpty as _isEmpty } from 'lodash';
 import Toast from 'react-native-simple-toast';
 import moment from 'moment';
 import ImagePicker from 'react-native-image-picker';
@@ -52,6 +52,7 @@ import {
   deleteMessageForEveryone,
   deleteMessageForMe,
   exitRoom,
+  loadChatHistory
 } from '../../redux/actions/socket-actions';
 import { setChatRoomMessages } from '../../redux/actions/messenger-actions';
 import { uploadAttachment } from '../../apis/chat-operations';
@@ -90,6 +91,10 @@ export default (ChatRoom = () => {
   const [isEmojiadded, setIsEmojiAdded] = useState(false);
 
   const [isChanged, setIsChanged] = useState(false);
+  const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
+  const [limit, setLimit] = useState(15);
+  const [skip, setSkip] = useState(0);
+
   const { currentChatFriend: currentRoom } = useSelector(
     state => state.messenger,
   );
@@ -100,17 +105,14 @@ export default (ChatRoom = () => {
   const anotherUser = currentRoom.participant_two;
   const roomType = currentRoom.type;
 
-  let start = 0;
-  let end = 1000;
-
   useEffect(() => {
     formatMessages();
     getChatsLists(dispatch);
     getRecentMessage(newMsg => {
       const msgObj = [getMessageObj(newMsg)];
       readMessages(id, [newMsg._id]);
-
       setMessages(previousArr => GiftedChat.append(previousArr, msgObj));
+      setSkip(prev => prev + 1);
     });
     return () => {
       dispatch(setChatRoomMessages([]));
@@ -179,25 +181,24 @@ export default (ChatRoom = () => {
   }, []);
 
   const formatMessages = () => {
-    // console.log(chatRoomMessages[0]);
+    console.log('formatMessages');
     var messageData = [];
-
     chatRoomMessages.forEach(message => {
       if (!message.deletedBy.includes(loggedInUser)) {
         let msgObj = getMessageObj(message);
         messageData.push(msgObj);
       }
     });
-
-    let updateMsg = _.sortBy(
-      _.uniqBy(messageData, '_id'),
-      'createdAt',
-    ).reverse();
+    // let updateMsg = _.sortBy(
+    //   _.uniqBy(messageData, '_id'),
+    //   'createdAt',
+    // ).reverse();
     setIsChanged(!isChanged);
-    setMessages(updateMsg);
+    setMessages(messageData);
     setMessagesStatus('recieved');
+    setSkip(messageData.length);
   };
-  function getMessageObj(message) {
+  const getMessageObj = (message) => {
     let msgObj = {
       _id: message._id,
       createdAt: moment(message.createdAt),
@@ -488,6 +489,24 @@ export default (ChatRoom = () => {
       );
     }
   };
+  const loadMoreChat = () => {
+    loadChatHistory(id, skip, limit, (messages) => {
+      if (!_isEmpty(messages)) {
+        let messageData = [];
+        messages.forEach(message => {
+          messageData.push(getMessageObj(message));
+        });
+        setMessages(previousArr => {
+          const results = messageData.filter(({ _id: id1 }) => !previousArr.some(({ _id: id2 }) => id2 === id1));
+          setSkip(previousArr.length + results.length);
+          return GiftedChat.prepend(previousArr, results);
+        });
+      }
+      setIsLoadingEarlier(false);
+    })
+  }
+
+
   return (
     <>
       <GiftedChat
@@ -572,6 +591,19 @@ export default (ChatRoom = () => {
           setTypingMessage(e);
           setShowEmojiBoard(false);
         }}
+        listViewProps={{
+          scrollEventThrottle: 400,
+          onScroll: ({ nativeEvent }) => {
+            if (isCloseToTop(nativeEvent)) {
+              setIsLoadingEarlier(true)
+              loadMoreChat();
+            }
+          }
+        }}
+        loadEarlier={isLoadingEarlier}
+        // onLoadEarlier={() => loadMoreChat()}
+        isLoadingEarlier={isLoadingEarlier}
+        extraData={{}}
       />
 
       {showEmoji && (
@@ -1049,6 +1081,11 @@ function getTime(value) {
   sec = ('0' + sec.toString()).slice(-2);
 
   return min + ':' + sec;
+}
+
+function isCloseToTop({ layoutMeasurement, contentOffset, contentSize }) {
+  const paddingToTop = 80;
+  return contentSize.height - layoutMeasurement.height - paddingToTop <= contentOffset.y;
 }
 
 /*-------------------------------*/

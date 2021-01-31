@@ -155,8 +155,26 @@ export const getChatsLists = dispatch => {
   if (socket) {
     socket.on(ChatEvent.CHAT_HISTORY, data => {
       if (!data.error && data.data) {
-        //console.log('joinroom-socket', data.data.length);
+        console.log('joinroom-socket', data.data.length);
         dispatch(setChatRoomMessages(data.data));
+      }
+    });
+  } else {
+    connectSocketIo();
+  }
+};
+
+export const loadChatHistory = (roomId, skip, limit, callBack) => {
+  if (socket) {
+    const input = {
+      roomId,
+      skip,
+      limit
+    };
+    socket.emit(ChatEvent.LOAD_HISTORY, input);
+    socket.on(ChatEvent.LOAD_HISTORY, data => {
+      if (!data.error && data.data) {
+        callBack(data.data);
       }
     });
   } else {

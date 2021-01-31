@@ -14,5 +14,5 @@ export const WS_HOST = `${PROTOCOLS.ws}${HOST}`
 //old prod:  'http://3.135.61.45:8080'
 //old dev:  'http://3.135.61.45:8082'
 
-//new prod:  'http://65.1.65.159:8080'
-//new dev:  'http://65.1.65.159:8082'
+//new prod:  'http://65.0.122.183:8080'
+//new dev:  'http://65.0.122.183:8082'
