@@ -55,12 +55,12 @@ class AudioPlayer extends Component {
 
   getProgressStyles = () => {
     const animated_width = this.progress.interpolate({
-      inputRange: [0, 50, 100],
-      outputRange: [0, 50, 100],
+      inputRange: [0, 0.5, 1],
+      outputRange: [0, 0.5, 1],
     });
 
     return {
-      width: animated_width,
+      flex: animated_width,
       backgroundColor: BaseBackgroundColors.profileColor,
       height: 5,
     };
@@ -87,7 +87,7 @@ class AudioPlayer extends Component {
 
       Animated.timing(this.progress, {
         duration: this.player_duration,
-        toValue: 100,
+        toValue: 1,
       }).start();
     }
   };
@@ -100,10 +100,12 @@ const styles = {
     margin: 10,
   },
   rail: {
-    width: 100,
+    minWidth: 100,
+    flexGrow: 1,
     height: 5,
     marginLeft: 5,
     backgroundColor: 'grey',
+    flexDirection: 'row',
   },
 };
 

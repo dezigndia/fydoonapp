@@ -13,22 +13,21 @@ import {BaseBackgroundColors} from '../../../styles/constants';
 import {styles} from '../../../styles/preview-image-styles';
 const PreviewImageScreen = ({navigation, route}) => {
   const image = route.params.imageuri;
+
   return (
     <>
-      <StatusBar
-        backgroundColor={BaseBackgroundColors.secondary}
-        barStyle="light-content"
-      />
+      <StatusBar backgroundColor={'black'} />
       <SafeAreaView style={styles.mainContainer}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={{padding: 10, alignSelf: 'flex-start'}}
-            onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={{padding: 10, alignSelf: 'flex-start'}}>
             <Icon
-              name="times-circle"
+              name="times"
               type="font-awesome"
               size={28}
-              color={'white'}
+              color={'transparent'}
+              reverseColor="white"
+              reverse
+              onPress={() => navigation.goBack()}
             />
           </TouchableOpacity>
         </View>

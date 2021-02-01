@@ -41,7 +41,7 @@ import {checkPermission} from '../../utils/utils';
 import EmojiSelector, {Categories} from 'react-native-emoji-selector';
 import {styles} from '../../styles/messenger-styles';
 import VideoPlayer from '../players/videoplayer';
-import ChatBubble from '../players/chatbubble';
+import CustomChatBubble from '../players/customChatBubble';
 import AudioPlayer from '../players/audioplayer';
 import {
   getChatsLists,
@@ -56,14 +56,14 @@ import {
 import {setChatRoomMessages} from '../../redux/actions/messenger-actions';
 import {HOST} from '../../apis/constants';
 import {uploadAttachment} from '../../apis/chat-operations';
+import {useNavigation, useRoute} from '@react-navigation/native';
 
 const Blob = RNFetchBlob.polyfill.Blob;
 const fs = RNFetchBlob.fs;
 var currRecordingFileTime;
-// window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest;
-// window.Blob = Blob;
 
 export default (ChatRoom = () => {
+  const navigation = useNavigation();
   const loggedInUserData = useSelector(state => state.userDetails);
   const utils = useSelector(state => state.utils);
   const dispatch = useDispatch();
@@ -207,23 +207,19 @@ export default (ChatRoom = () => {
       isDeleted: message.isDeleted,
     };
 
-    let msgKey = '';
-    let msgValue = '';
-    let msgUrl = '';
+    let attachmentKey = '';
 
     if (message.attachments && message.attachments.length > 0) {
-      // msgKey = message.attachments[0].contentType.split('/').shift();
-      msgKey = 'file';
-      msgValue = message.attachments[0].filename;
-      msgUrl = message.attachments[0].url;
+      let fileTypes = ['audio', 'video', 'image'];
+      attachmentKey = message.attachments[0].contentType.split('/').shift();
+      if (!fileTypes.includes(attachmentKey)) {
+        attachmentKey = 'file';
+      }
+      msgObj[attachmentKey] = true;
+      msgObj['text'] = message.attachments[0].filename;
+      msgObj['url'] = message.attachments[0].url;
     } else if (!message.attachments || message.attachments.length == 0) {
-      msgKey = 'text';
-      msgValue = message.msg;
-    }
-
-    msgObj[msgKey] = msgValue;
-    if (msgUrl) {
-      msgObj['url'] = msgUrl;
+      msgObj['text'] = message.msg;
     }
 
     return msgObj;
@@ -512,11 +508,12 @@ export default (ChatRoom = () => {
             )}
           </>
         )}
+        navigation={navigation}
         keyboardShouldPersistTaps="never"
         user={{_id: loggedInUser}}
-        renderMessageVideo={props =>
-          renderMessageVideo({...props, setVideoModal, openFileViewr})
-        }
+        // renderMessageVideo={props =>
+        //   renderMessageVideo({...props, , openFileViewr})
+        // }
         isKeyboardInternallyHandled={false}
         renderBubble={props =>
           renderBubble({
@@ -591,22 +588,7 @@ export default (ChatRoom = () => {
           }}
         />
       )}
-      {viedoModal !== '' && (
-        <Modal visible={viedoModal !== ''}>
-          <View style={styles.modal}>
-            <TouchableOpacity onPress={() => setVideoModal('')}>
-              <Icon
-                name={'close'}
-                size={20}
-                type={'font-awesome'}
-                color={'white'}
-                style={styles.close}
-              />
-            </TouchableOpacity>
-            <VideoPlayer uri={viedoModal} />
-          </View>
-        </Modal>
-      )}
+
       {isUploading && (
         <View
           style={{
@@ -636,41 +618,34 @@ function renderBubble(props) {
       {/* {props.currentMessage.audio ? (
         renderAudio(props)
       ) : props.currentMessage.file ? (
-        renderFile(props)
+        
       ) : ( */}
       <Bubble
         {...props}
         {...RenderMessageAudioProps}
         touchableProps={{
           onPress: () => {
-            if (props.currentMessage.file) {
-              props.openFileViewr(props.currentMessage.url);
-            } else if (props.onPress) {
-              // props.onPres();
+            if (props.currentMessage.video) {
+              props.navigation.navigate('preview-video', {
+                videoUrl: props.currentMessage.url,
+              });
+            } else if (props.currentMessage.image) {
+              props.navigation.navigate('preview-image', {
+                imageuri: props.currentMessage.url,
+              });
             }
+            // else if (props.currentMessage.url) {
+            //   props.openFileViewr(props.currentMessage.url);
+            //   // props.onPres();
+            // }
           },
         }}
-        renderCustomView={() => (
-          <>
-            {props.currentMessage.file && (
-              <View
-                style={{
-                  paddingTop: 10,
-                  paddingBottom: 5,
-                  paddingHorizontal: 10,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}>
-                <Icon name="play" type="font-awesome" size={16} color="grey" />
-                <Text style={{color: 'grey', marginLeft: 5}}>
-                  Tap to open file
-                </Text>
-              </View>
-            )}
-          </>
-        )}
+        renderCustomView={() => <CustomChatBubble {...props} />}
         currentMessage={{
           ...props.currentMessage,
+          audio: undefined,
+          image: undefined,
+          video: undefined,
           text: props.currentMessage.file || props.currentMessage.text,
         }}
         wrapperStyle={{
@@ -983,51 +958,6 @@ function renderDay(props) {
   );
 }
 
-const renderMessageVideo = props => {
-  const {currentMessage} = props;
-
-  return (
-    <TouchableOpacity
-      style={{
-        paddingVertical: 20,
-        paddingHorizontal: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-      }}
-      onPress={() => props.openFileViewr(currentMessage.video)}>
-      <Icon name="play" type="font-awesome" size={16} color="grey" />
-      <Text style={{color: 'grey', marginLeft: 5}}>Tap to play video</Text>
-    </TouchableOpacity>
-  );
-};
-
-const renderAudio = props => {
-  return (
-    <ChatBubble {...props}>
-      <AudioPlayer url={props.currentMessage.audio} />
-    </ChatBubble>
-  );
-};
-
-const renderFile = props => {
-  return (
-    <ChatBubble
-      {...props}
-      onPress={() => props.openFileViewr(props.currentMessage.url)}>
-      <View
-        style={{
-          paddingVertical: 5,
-          paddingHorizontal: 10,
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}>
-        <Icon name="play" type="font-awesome" size={16} color="grey" />
-        <Text style={{color: 'grey', marginLeft: 5}}>Tap to open file</Text>
-      </View>
-    </ChatBubble>
-  );
-};
-
 /*-------------------------------*/
 
 function addCharater(oldS, newS, pos) {
@@ -1057,3 +987,165 @@ const recordingSettings = {
   IncludeBase64: true,
   AudioEncodingBitRate: 32000,
 };
+
+const Dmessages = [
+  {
+    _id: '60170f9454dc41ca72b4d3bd',
+    createdAt: '2021-01-31T20:14:12.224Z',
+    isDeleted: false,
+    system: false,
+    text: 'small.mp4',
+    unread: false,
+    url: 'http://3.135.61.45:8082/api/attachments/60170f9354dc41ca72b4d3b8.mp4',
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+    video: true,
+  },
+  {
+    _id: '6016f4d754dc41ca72b4d3a9',
+    createdAt: '2021-01-31T18:20:07.526Z',
+    isDeleted: false,
+    system: false,
+    text: 'www.abc.com',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6016f07a54dc41ca72b4d392',
+    createdAt: '2021-01-31T18:01:30.180Z',
+    isDeleted: false,
+    system: false,
+    text: 'jkjkj',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6016dc6b54dc41ca72b4c741',
+    audio: true,
+    createdAt: '2021-01-31T16:35:55.484Z',
+    isDeleted: false,
+    system: false,
+    text: 'audio1612110933060.acc',
+    unread: false,
+    url: 'http://3.135.61.45:8082/api/attachments/6016dc5c54dc41ca72b4c73d.acc',
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6014692454dc41ca72b4c57a',
+    createdAt: '2021-01-29T19:59:32.567Z',
+    image: true,
+    isDeleted: false,
+    system: false,
+    text: 'IMG_20210120_232415.jpg',
+    unread: false,
+    url: 'http://3.135.61.45:8082/api/attachments/6014692454dc41ca72b4c576.jpg',
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6014690e54dc41ca72b4c575',
+    createdAt: '2021-01-29T19:59:10.799Z',
+    isDeleted: false,
+    system: false,
+    text: 'Rr',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6014690654dc41ca72b4c574',
+    createdAt: '2021-01-29T19:59:02.914Z',
+    isDeleted: false,
+    system: false,
+    text: 'heyy',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6012eee254dc41ca72b4b7de',
+    createdAt: '2021-01-28T17:05:38.773Z',
+    isDeleted: false,
+    system: false,
+    text: 'Jellj',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6012eeda54dc41ca72b4b7dd',
+    createdAt: '2021-01-28T17:05:30.033Z',
+    isDeleted: false,
+    system: false,
+    text: 'Hello',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '600effe154dc41ca72b4a743',
+    createdAt: '2021-01-25T17:29:05.073Z',
+    isDeleted: false,
+    system: false,
+    text: 'Heyy',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '600e8ac154dc41ca72b4539c',
+    createdAt: '2021-01-25T09:09:22.003Z',
+    isDeleted: false,
+    system: false,
+    text: 'Heyy',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6007446e33c3314fbacb7c5a',
+    createdAt: '2021-01-19T20:43:26.724Z',
+    isDeleted: false,
+    system: false,
+    text: 'Tyf',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '600714d033c3314fbacb239f',
+    createdAt: '2021-01-19T17:20:16.226Z',
+    isDeleted: false,
+    system: false,
+    text: 'Hello',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6006a46b33c3314fbaca95ad',
+    createdAt: '2021-01-19T09:20:43.906Z',
+    isDeleted: false,
+    system: false,
+    text: 'Heyyy',
+    unread: false,
+    user: {_id: '5ff1bc7345b8834c3e1613ea', name: 'Rohit Singh'},
+  },
+  {
+    _id: '600675d633c3314fbac9a167',
+    createdAt: '2021-01-19T06:01:58.626Z',
+    isDeleted: false,
+    system: false,
+    text: 'Gvh',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '600675c133c3314fbac99592',
+    createdAt: '2021-01-19T06:01:37.796Z',
+    isDeleted: true,
+    system: false,
+    text: 'message deleted',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+  {
+    _id: '6005f68533c3314fbac8356b',
+    createdAt: '2021-01-18T20:58:45.104Z',
+    isDeleted: true,
+    system: false,
+    text: 'message deleted',
+    unread: false,
+    user: {_id: '5fe79a839682a999133dccb5', name: 'utkarsh gupta'},
+  },
+];
