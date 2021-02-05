@@ -31,14 +31,16 @@ import {
   sendContacts,
 } from '../../../redux/actions/socket-actions';
 import _ from 'lodash';
+import SendSMS from 'react-native-sms';
 
-const ContactScreen = (props) => {
-  const contacts = useSelector((state) => state.contacts.contacts);
+const ContactScreen = props => {
+  const contacts = useSelector(state => state.contacts.contacts);
   const dispatch = useDispatch();
-  const {subscriptions} = useSelector((state) => state.socket);
-  const utils = useSelector((state) => state.utils);
-  const detectChanges = useSelector((state) => state.detectChanges);
-  const userDetails = useSelector((state) => state.userDetails);
+  const {subscriptions} = useSelector(state => state.socket);
+  const utils = useSelector(state => state.utils);
+  const detectChanges = useSelector(state => state.detectChanges);
+  const userDetails = useSelector(state => state.userDetails);
+  const {userData} = userDetails;
   const ws = utils.ws;
   const [refreshing] = useState(false);
   const [filteredFriends, setFilteredFriends] = useState(contacts.friends);
@@ -92,17 +94,44 @@ const ContactScreen = (props) => {
       return;
     }
     const filtering = contacts.friends.filter(
-      (item) =>
-        getName(item).toLowerCase().startsWith(value) ||
-        getPhone(item).toLowerCase().includes(value),
+      item =>
+        getName(item)
+          .toLowerCase()
+          .startsWith(value) ||
+        getPhone(item)
+          .toLowerCase()
+          .includes(value),
     );
-    // const filterInvites = contacts.notFriends.filter(
-    //   item =>
-    //     item.name.toLowerCase().startsWith(value) ||
-    //     item['phone-number'].toLowerCase().startsWith(value),
-    // );
+    const filterInvites = contacts.notFriends.filter(
+      item =>
+        item.firstName.toLowerCase().startsWith(value) ||
+        item.phone.toLowerCase().includes(value),
+    );
     setFilteredFriends(filtering);
-    // setFilteredInvites(filterInvites);
+    setFilteredInvites(filterInvites);
+  }
+  function triggerMessage(invitedPerson) {
+    SendSMS.send(
+      {
+        body: `${
+          userData ? userData.firstName + ' ' + userData.lastName || 'User' : ''
+        } wants you to join Fydoon app.`,
+        recipients: [invitedPerson.phone],
+        successTypes: ['sent', 'queued'],
+
+        allowAndroidSendWithoutReadPermission: true,
+      },
+      (completed, cancelled, error) => {
+        console.log(
+          'SMS Callback: completed: ' +
+            completed +
+            ' cancelled: ' +
+            cancelled +
+            'error: ' +
+            error,
+        );
+      },
+    );
   }
   //console.log(filteredFriends);
   return (
@@ -115,7 +144,7 @@ const ContactScreen = (props) => {
         {...props}
         title={'Contacts'}
         searchValue={search}
-        onSearch={(text) => handleSearch(text)}
+        onSearch={text => handleSearch(text)}
         onCancel={() => {
           setFilteredFriends(contacts.friends);
           setFilteredInvites(contacts.notFriends);
@@ -223,7 +252,7 @@ const ContactScreen = (props) => {
                           onPress: () => console.log('Cancel Pressed'),
                           style: 'cancel',
                         },
-                        {text: 'OK', onPress: () => console.log('OK Pressed')},
+                        {text: 'OK', onPress: () => triggerMessage(item)},
                       ],
                       {cancelable: false},
                     )

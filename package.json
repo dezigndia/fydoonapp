@@ -60,6 +60,7 @@
     "react-native-screens": "^2.8.0",
     "react-native-simple-toast": "^1.1.2",
     "react-native-smart-emoji-picker": "^0.1.2",
+    "react-native-sms": "^1.11.0",
     "react-native-sound": "^0.11.0",
     "react-native-swiper": "^1.6.0",
     "react-native-tab-view": "^2.14.4",

@@ -2,14 +2,15 @@ const PROTOCOLS = {
   http: 'http://',
   https: 'https://',
   ws: 'ws://',
-  wss: 'wss://'
-}
-const PORT = '3000'
-export const HOST = `192.168.1.5:${PORT}`
+  wss: 'wss://',
+};
+const PORT = '3000';
+//export const HOST = `192.168.1.5:${PORT}`;
+export const HOST = '65.0.122.183:8082';
 export const mainApi = {
   baseUrl: `${PROTOCOLS.http}${HOST}/api`,
 };
-export const WS_HOST = `${PROTOCOLS.ws}${HOST}`
+export const WS_HOST = `${PROTOCOLS.ws}${HOST}`;
 
 //old prod:  'http://3.135.61.45:8080'
 //old dev:  'http://3.135.61.45:8082'

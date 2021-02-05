@@ -8,7 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import {BaseBackgroundColors} from '../../../styles/constants';
-import chatBack from '../../../assets/images/chat-back.jpg';
+import chatBack from '../../../assets/images/chat-back.png';
 import ChatRoom from '../../../components/messenger/chat-room';
 import LiveChatHeader from '../../../components/live-chat/live-chat-header';
 import {styles} from '../../../styles/live-chat-styles';

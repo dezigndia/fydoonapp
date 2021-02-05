@@ -388,7 +388,7 @@ const AccountSetupScreen = props => {
               )
             }
             containerStyle={styles.buttonContainer}
-            buttonStyle={{backgroundColor: '#485A96'}}
+            buttonStyle={{backgroundColor: BaseBackgroundColors.profileColor}}
             onPress={() => {
               if (!loading) {
                 handleNext();

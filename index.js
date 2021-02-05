@@ -8,5 +8,5 @@ import {name as appName} from './app.json';
 import {typography} from './src/utils/typography';
 
 typography();
-
+console.disableYellowBox = true;
 AppRegistry.registerComponent(appName, () => App);
