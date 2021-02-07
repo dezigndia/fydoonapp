@@ -1,4 +1,4 @@
-import {Platform, PermissionsAndroid} from 'react-native';
+import { Platform, PermissionsAndroid } from 'react-native';
 
 export function formatDate(date) {
   var d = new Date(date),
@@ -27,4 +27,11 @@ export async function checkPermission() {
     console.log('Permission result:', result);
     return result === true || result === PermissionsAndroid.RESULTS.GRANTED;
   });
+}
+
+
+export const getDisplayName = (user) => {
+  const { firstName = '', lastName = '', phone = {} } = user;
+  const displayName = firstName ? `${firstName} ${lastName}` : `${phone.code}${phone.number}`;
+  return displayName;
 }

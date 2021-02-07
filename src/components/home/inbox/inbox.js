@@ -1,10 +1,10 @@
-import React, {useState, useEffect} from 'react';
-import {RefreshControl, View, Text, FlatList, Alert} from 'react-native';
-import {BaseBackgroundColors} from '../../../styles/constants';
+import React, { useState, useEffect } from 'react';
+import { RefreshControl, View, Text, FlatList, Alert } from 'react-native';
+import { BaseBackgroundColors } from '../../../styles/constants';
 import InboxListItem from './inbox-listItem';
-import {useDispatch, useSelector} from 'react-redux';
-import {setChatFriend} from '../../../redux/actions/messenger-actions';
-import {styles} from '../../../styles/contact-styles';
+import { useDispatch, useSelector } from 'react-redux';
+import { setChatFriend } from '../../../redux/actions/messenger-actions';
+import { styles } from '../../../styles/contact-styles';
 import {
   getChatRooms,
   deleteChat,
@@ -13,25 +13,26 @@ import {
 } from '../../../apis/chat-operations';
 import moment from 'moment';
 import Toast from 'react-native-simple-toast';
-import {setChatRooms} from '../../../redux/actions/inbox-actions';
+import { setChatRooms } from '../../../redux/actions/inbox-actions';
 import {
   getChatsLists,
   deleteCompleteGroupChat,
   exitFromGroup,
   deleteCompleteOnetoOneChat,
 } from '../../../websocket-apis/methods';
-import {Overlay} from 'react-native-elements';
+import { Overlay } from 'react-native-elements';
 import InboxModal from '../../long-press-modals/inbox-modal';
-import {openContact} from '../../../utils/contacts-update';
+import { openContact } from '../../../utils/contacts-update';
 import _ from 'lodash';
 import {
   getSubscriptions,
   joinRoom,
 } from '../../../redux/actions/socket-actions';
+import { getDisplayName } from '../../../utils/utils';
 
-export default function Inbox({navigation, route}) {
+export default function Inbox({ navigation, route }) {
   const utils = useSelector(state => state.utils);
-  const {subscriptions} = useSelector(state => state.socket);
+  const { subscriptions } = useSelector(state => state.socket);
   const detectChanges = useSelector(state => state.detectChanges);
   let ws = utils.ws;
   const inbox = useSelector(state => state.inbox);
@@ -69,10 +70,7 @@ export default function Inbox({navigation, route}) {
           roomId: item.roomId,
           participant_one: '',
           participant_two: item.user._id,
-          roomDisplayName:
-            item.user.firstName + ' ' + item.user.lastName ||
-            item.user.phone.code + ' ' + item.user.phone.number ||
-            '',
+          roomDisplayName: getDisplayName(item.user),
           numberOfmessage: item.unreadCount,
           isActive: false,
           message: getMeassageText(item),
@@ -180,7 +178,7 @@ export default function Inbox({navigation, route}) {
         )}
         data={inbox.chatRooms || []}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={({item, index}) => (
+        renderItem={({ item, index }) => (
           <InboxListItem
             onPress={() => {
               dispatch(setChatFriend(item));
@@ -213,7 +211,7 @@ export default function Inbox({navigation, route}) {
           <InboxModal
             item={selectedItem}
             onCancel={() => setModal(false)}
-            onEdit={() => {}}
+            onEdit={() => { }}
             onReport={() => {
               onReport(selectedItem);
               setModal(false);

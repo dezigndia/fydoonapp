@@ -129,9 +129,9 @@ export const createDirectRoom = (userId, callBack) => {
     socket.on(ChatEvent.CREATE_DIRECT_ROOM, data => {
       if (!data.error && data.data) {
         //console.log('joinroom-socket', data.data);
-        joinRoom(data.data._id);
+        // joinRoom(data.data._id);
         if (callBack) {
-          callBack();
+          callBack(data.data._id);
         }
       }
     });

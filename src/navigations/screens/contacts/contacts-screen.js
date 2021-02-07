@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,18 +12,18 @@ import {
   Alert,
 } from 'react-native';
 import logo from '../../../assets/images/main.jpg';
-import {BaseBackgroundColors} from '../../../styles/constants';
-import {styles} from '../../../styles/contact-styles';
+import { BaseBackgroundColors } from '../../../styles/constants';
+import { styles } from '../../../styles/contact-styles';
 import ContactsHeader from '../../../components/contacts/contact-header';
 import ContactListItem from '../../../components/contacts/contact-listitem';
-import {openContact, getContacts} from '../../../utils/contacts-update';
-import {useSelector, useDispatch} from 'react-redux';
-import {initiateChat} from '../../../apis/chat-operations';
+import { openContact, getContacts } from '../../../utils/contacts-update';
+import { useSelector, useDispatch } from 'react-redux';
+import { initiateChat } from '../../../apis/chat-operations';
 import Toast from 'react-native-simple-toast';
-import {getChatsLists} from '../../../websocket-apis/methods';
-import {updateChatList} from '../../../redux/actions/detect-changes-actions';
-import {setChatFriend} from '../../../redux/actions/messenger-actions';
-import {setContacts} from '../../../redux/actions/contact-action';
+import { getChatsLists } from '../../../websocket-apis/methods';
+import { updateChatList } from '../../../redux/actions/detect-changes-actions';
+import { setChatFriend } from '../../../redux/actions/messenger-actions';
+import { setContacts } from '../../../redux/actions/contact-action';
 import {
   createDirectRoom,
   getSubscriptions,
@@ -36,11 +36,11 @@ import SendSMS from 'react-native-sms';
 const ContactScreen = props => {
   const contacts = useSelector(state => state.contacts.contacts);
   const dispatch = useDispatch();
-  const {subscriptions} = useSelector(state => state.socket);
+  const { subscriptions } = useSelector(state => state.socket);
   const utils = useSelector(state => state.utils);
   const detectChanges = useSelector(state => state.detectChanges);
   const userDetails = useSelector(state => state.userDetails);
-  const {userData} = userDetails;
+  const { userData } = userDetails;
   const ws = utils.ws;
   const [refreshing] = useState(false);
   const [filteredFriends, setFilteredFriends] = useState(contacts.friends);
@@ -74,12 +74,16 @@ const ContactScreen = props => {
       isGroup: false,
       participant_two_number: getPhone(item),
     };
-    dispatch(setChatFriend(obj));
     if (item.roomId) {
+      dispatch(setChatFriend(obj));
       joinRoom(item.roomId);
       props.navigation.navigate('messenger');
     } else {
-      createDirectRoom(item._id, () => {
+      createDirectRoom(item._id, (roomId) => {
+        obj.roomId = roomId;
+        obj.id = roomId;
+        dispatch(setChatFriend(obj));
+        joinRoom(roomId);
         props.navigation.navigate('messenger');
         sendContacts(utils.token, dispatch);
       });
@@ -113,9 +117,8 @@ const ContactScreen = props => {
   function triggerMessage(invitedPerson) {
     SendSMS.send(
       {
-        body: `${
-          userData ? userData.firstName + ' ' + userData.lastName || 'User' : ''
-        } wants you to join Fydoon app.`,
+        body: `${userData ? userData.firstName + ' ' + userData.lastName || 'User' : ''
+          } wants you to join Fydoon app.`,
         recipients: [invitedPerson.phone],
         successTypes: ['sent', 'queued'],
 
@@ -124,11 +127,11 @@ const ContactScreen = props => {
       (completed, cancelled, error) => {
         console.log(
           'SMS Callback: completed: ' +
-            completed +
-            ' cancelled: ' +
-            cancelled +
-            'error: ' +
-            error,
+          completed +
+          ' cancelled: ' +
+          cancelled +
+          'error: ' +
+          error,
         );
       },
     );
@@ -204,7 +207,7 @@ const ContactScreen = props => {
           showsVerticalScrollIndicator={false}
           data={filteredFriends}
           keyExtractor={(item, index) => index.toString()}
-          renderItem={({item, index}) => (
+          renderItem={({ item, index }) => (
             <ContactListItem
               isFriend={true}
               onPress={() => {
@@ -236,15 +239,14 @@ const ContactScreen = props => {
               showsVerticalScrollIndicator={false}
               data={filteredInvites}
               keyExtractor={(item, index) => index.toString()}
-              renderItem={({item, index}) => (
+              renderItem={({ item, index }) => (
                 <ContactListItem
                   iconName={'account'}
                   iconType={'material-community'}
                   onPress={() =>
                     Alert.alert(
                       'Fydoon',
-                      `Send an invitation to ${
-                        item.firstName ? item.firstName : item.phone
+                      `Send an invitation to ${item.firstName ? item.firstName : item.phone
                       }`,
                       [
                         {
@@ -252,9 +254,9 @@ const ContactScreen = props => {
                           onPress: () => console.log('Cancel Pressed'),
                           style: 'cancel',
                         },
-                        {text: 'OK', onPress: () => triggerMessage(item)},
+                        { text: 'OK', onPress: () => triggerMessage(item) },
                       ],
-                      {cancelable: false},
+                      { cancelable: false },
                     )
                   }
                   txtLeftTitle={item.firstName ? item.firstName : item.phone}
@@ -272,14 +274,9 @@ const ContactScreen = props => {
 
 export default ContactScreen;
 function getName(userDetails) {
-  return (
-    userDetails.firstName + ' ' + userDetails.lastName ||
-    userDetails.localContact.firstName +
-      ' ' +
-      userDetails.localContact.lastName ||
-    userDetails.phone.code + ' ' + userDetails.phone.number ||
-    ''
-  );
+  const { firstName = '', lastName = '', localContact: { firstName: lFirstName = '', lastName: lLastName = '' } } = userDetails;
+  const displayName = firstName ? `${firstName} ${lastName}` : `${lFirstName} ${lLastName}`;
+  return displayName;
 }
 function getPhone(userDetails) {
   return userDetails.phone.code + ' ' + userDetails.phone.number || '';
